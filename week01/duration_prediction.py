@@ -3,11 +3,33 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import os
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import Ridge
-from sklearn.metrics import root_mean_squared_error
+from sklearn.metrics import root_mean_squared_error, r2_score
+
+
+def read_dataframe(filename):
+    if filename.endswith('.csv'):
+        df = pd.read_csv(filename)
+
+        df.lpep_dropoff_datetime = pd.to_datetime(df.lpep_dropoff_datetime)
+        df.lpep_pickup_datetime = pd.to_datetime(df.lpep_pickup_datetime)
+    elif filename.endswith('.parquet'):
+        df = pd.read_parquet(filename)
+
+    df['duration'] = df.lpep_dropoff_datetime - df.lpep_pickup_datetime
+    df.duration = df.duration.apply(lambda td: td.total_seconds() / 60)
+
+    df = df[(df.duration >= 1) & (df.duration <= 60)]
+
+    categorical = ['PULocationID', 'DOLocationID']
+    df[categorical] = df[categorical].astype(str)
+    
+    return df
+
 
 
 # Load the dataset
@@ -27,6 +49,7 @@ categorical = ['PULocationID', 'DOLocationID']
 numerical = ['trip_distance']
 
 # Convert categorical features to string type
+#df[categorical] = df[categorical].map(str)
 df[categorical] = df[categorical].astype(str)
 
 # Transform the mixed data types into a format suitable for machine learning using DictVectorizer
@@ -54,11 +77,22 @@ lr.fit(X_train, y_train)
 y_pred = lr.predict(X_train)
 
 rmse_val = root_mean_squared_error(y_train, y_pred)
+r2_val = r2_score(y_train, y_pred)
+print(f'RMSE: {rmse_val:.3f}, R2: {r2_val:.3f}')
 
 sns.displot(y_pred, label='prediction')
 sns.displot(y_train, label='actual')
 
 plt.legend()
-plt.show()
+os.makedirs('images', exist_ok=True)
+plt.savefig('images/duration_prediction_distribution.png')
+# plt.show()
+# plt.waitforbuttonpress()
+
 
 pass
+
+
+if __name__ == '__main__':
+    # Load the dataset
+    df = pd.read_parquet('~/Data/green_tripdata_2021-01.parquet')
