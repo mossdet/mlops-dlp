@@ -20,12 +20,21 @@ from sklearn.metrics import mean_squared_error, root_mean_squared_error, r2_scor
 
 
 class NYCTaxiDurationPrediction:
-    def __init__(self, training_data_path, validation_data_path, models_dir="models/"):
+    def __init__(self, training_data_path, validation_data_path, test_data_path, mlflow_tracking_uri, mlflow_experiment_name, models_dir="models/", images_dir="images/"):
         self.training_data_path = training_data_path
         self.validation_data_path = validation_data_path
+        self.test_data_path = test_data_path
+        self.mlflow_tracking_uri=mlflow_tracking_uri
+        self.mlflow_experiment_name=mlflow_experiment_name
         self.models_dir = models_dir
+        self.images_dir = images_dir
         self.preprocess_path = os.path.join(self.models_dir, 'preprocessor.b')
+
+        mlflow.set_tracking_uri(self.mlflow_tracking_uri)
+        mlflow.set_experiment(self.mlflow_experiment_name)
         os.makedirs(self.models_dir, exist_ok=True)
+        os.makedirs(self.images_dir, exist_ok=True)
+
         pass
 
     
@@ -73,10 +82,12 @@ class NYCTaxiDurationPrediction:
         # Load the dataset
         df_train = self.read_dataframe(self.training_data_path)
         df_val = self.read_dataframe(self.validation_data_path)
+        df_test = self.read_dataframe(self.test_data_path)
 
         # Create a new feature that combines pickup and dropoff locations
         df_train['PU_DO'] = df_train['PULocationID'] + '_' + df_train['DOLocationID']
         df_val['PU_DO'] = df_val['PULocationID'] + '_' + df_val['DOLocationID']
+        df_test['PU_DO'] = df_test['PULocationID'] + '_' + df_test['DOLocationID']
 
         # Select features by data type
         categorical = ['PU_DO'] #'PULocationID', 'DOLocationID']
@@ -85,6 +96,7 @@ class NYCTaxiDurationPrediction:
         # Convert categorical features to string type
         df_train[categorical] = df_train[categorical].astype(str)
         df_val[categorical] = df_val[categorical].astype(str)
+        df_test[categorical] = df_test[categorical].astype(str)
 
         # Transform the mixed data types into a format suitable for machine learning using DictVectorizer
         # DictVectorizer converts a list of dictionaries into a matrix of features
@@ -98,16 +110,20 @@ class NYCTaxiDurationPrediction:
         val_dicts = df_val[categorical + numerical].to_dict(orient='records')
         X_valid = dv.transform(val_dicts)
 
+        test_dicts = df_test[categorical + numerical].to_dict(orient='records')
+        X_test = dv.transform(test_dicts)
+
         # Select the target variable
         # The target variable is the duration of the trip in minutes
         target = 'duration'
         y_train = df_train[target].values
         y_valid = df_val[target].values
+        y_test = df_test[target].values
 
         # Create an example DMatrix for logging with MLflow
         X_examples = dv.transform(val_dicts[0:10])
 
-        return X_train, X_valid, y_train, y_valid, X_examples, dv
+        return X_train, X_valid, X_test, X_examples, y_train, y_valid, y_test, dv
 
     ### Objective function for Optuna hyperparameter tuning
     def objective_XGB(self, trial, data_train, data_valid, y_train, y_valid):
@@ -161,7 +177,7 @@ class NYCTaxiDurationPrediction:
             # Set up Optuna for hyperparameter tuning
             func = lambda trial:self.objective_XGB(trial, X_train, X_valid, y_train, y_valid)
             study = optuna.create_study(direction = "minimize")
-            study.optimize(func, n_trials = 10, timeout=None, n_jobs=1)
+            study.optimize(func, n_trials = 3, timeout=None, n_jobs=1)
 
             # Print the best trial and its parameters
             best_trial = study.best_trial
@@ -195,7 +211,7 @@ class NYCTaxiDurationPrediction:
                 mlflow.log_params(best_trial.params)
                 mlflow.log_metric("rmse", rmse_valid)
                 mlflow.log_artifact(self.preprocess_path, artifact_path="preprocessor")
-                mlflow.xgboost.log_model(best_model, artifact_path=self.models_dir, input_example=X_examples)
+                mlflow.xgboost.log_model(best_model, artifact_path="models", input_example=X_examples)
 
         return all_runs_best_model, best_rmse
 
@@ -217,36 +233,42 @@ class NYCTaxiDurationPrediction:
                 y_pred = mlmodel.predict(X_valid)
                 rmse = root_mean_squared_error(y_valid, y_pred)
                 mlflow.log_metric("rmse", rmse)
-                mlflow.sklearn.log_model(mlmodel, artifact_path=self.models_dir, input_example=X_examples)
+                mlflow.sklearn.log_model(mlmodel, artifact_path="models", input_example=X_examples)
     
     def run(self):
         # Preprocess the data
-        X_train, X_valid, y_train, y_valid, X_examples, dv = self.preprocess_data()
+        X_train, X_valid, X_test, X_examples, y_train, y_valid, y_test, dv = self.preprocess_data()
 
         # Save the preprocessor for later use
         self.save_preprocessor(dv)
 
         # Train the model with hyperparameter tuning
-        best_model, best_rmse = self.train_xgb_regressor(nr_runs=1, X_train=X_train, y_train=y_train, X_valid=X_valid, y_valid=y_valid, X_examples=X_examples)
-        # Optionally, visualize feature importance
-        plot_importance(best_model, max_num_features=10)
-        plt.savefig(os.path.join(self.models_dir, 'feature_importance.png'))
-        plot_tree(best_model, num_trees=0)
-        plt.savefig(os.path.join(self.models_dir, 'tree_plot.png'))
-        plt.close()
+        best_model, best_rmse = self.train_xgb_regressor(nr_runs=5, X_train=X_train, y_train=y_train, X_valid=X_valid, y_valid=y_valid, X_examples=X_examples)
+        try:
+            # Optionally, visualize feature importance
+            plot_importance(best_model, max_num_features=10)
+            plt.savefig(os.path.join(self.images_dir, 'feature_importance.png'))
+            plot_tree(best_model, num_trees=0)
+            plt.savefig(os.path.join(self.images_dir, 'tree_plot.png'))
+            plt.close()
 
-        # Optionally, visualize the distribution of trip durations
-        # create a subplot with two histograms
-        sns.set(style="whitegrid")
-        plt.figure(figsize=(12, 6))
-        sns.histplot(y_train, bins=50, kde=True, color='blue', label='Training Set')
-        sns.histplot(y_valid, bins=50, kde=True, color='orange', label='Validation Set')
-        plt.title("Distribution of Trip Durations")
-        plt.xlabel("Duration (minutes)")
-        plt.ylabel("Frequency")
-        plt.legend()
-        plt.savefig(os.path.join(self.models_dir, 'trip_duration_distribution.png'))
-        plt.close()
+        except Exception as e:
+            print(f"Error during feature importance visualization: {e}")
+
+        try:
+            # Optionally, visualize the distribution of trip durations
+            # create a subplot with two histograms
+            plt.figure(figsize=(12, 6))
+            sns.histplot(y_train, bins=50, kde=True, color='blue', label='Training Set')
+            sns.histplot(y_valid, bins=50, kde=True, color='orange', label='Validation Set')
+            plt.title("Distribution of Trip Durations")
+            plt.xlabel("Duration (minutes)")
+            plt.ylabel("Frequency")
+            plt.legend()
+            plt.savefig(os.path.join(self.images_dir, 'trip_duration_distribution.png'))
+            plt.close()
+        except Exception as e:
+            print(f"Error during distribution visualization: {e}")
 
 
         # Train scikit-learn models
@@ -257,13 +279,19 @@ class NYCTaxiDurationPrediction:
 
 if __name__ == '__main__':
 
-    mlflow.set_tracking_uri("sqlite:///mlflow/mlflow.db")
-    mlflow.set_experiment("nyc-taxi-experiment")
+    # Set the MLflow tracking URI
+    mlflow_df_path = "/home/ubuntu/mlops-dlp/mlflow/mlflow.db"
+    MLFLOW_TRACKING_URI = f"sqlite:///{mlflow_df_path}"
+    mlflow_experiment_name = "nyc-taxi-experiment"
 
     pipeline = NYCTaxiDurationPrediction(
         training_data_path='~/Data/green_tripdata_2021-01.parquet',
         validation_data_path='~/Data/green_tripdata_2021-02.parquet',
-        models_dir='/home/ubuntu/mlops-dlp/mlflow/models/'
+        test_data_path='~/Data/green_tripdata_2021-03.parquet',
+        mlflow_tracking_uri=MLFLOW_TRACKING_URI,
+        mlflow_experiment_name=mlflow_experiment_name,
+        models_dir='/home/ubuntu/mlops-dlp/mlflow/models/',
+        images_dir='/home/ubuntu/mlops-dlp/mlflow/images/'
     )
     pipeline.run()
     
