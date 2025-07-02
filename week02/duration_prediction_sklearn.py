@@ -76,6 +76,8 @@ target = 'duration'
 y_train = df_train[target].values
 y_valid = df_val[target].values
 
+X_examples = dv.transform(val_dicts[0:10])
+
 # X_train = X_train.toarray()
 # X_valid = X_valid.toarray()
 
@@ -84,6 +86,8 @@ mlflow.sklearn.autolog()
 for model_class in (RandomForestRegressor, GradientBoostingRegressor, ExtraTreesRegressor, LinearSVR):
 
     with mlflow.start_run():
+
+        print(f"Training model: {model_class.__name__}")
 
         mlflow.log_param("train-data-path", training_data_path)
         mlflow.log_param("valid-data-path", validation_data_path)
@@ -95,6 +99,7 @@ for model_class in (RandomForestRegressor, GradientBoostingRegressor, ExtraTrees
         y_pred = mlmodel.predict(X_valid)
         rmse = root_mean_squared_error(y_valid, y_pred)
         mlflow.log_metric("rmse", rmse)
+        mlflow.sklearn.log_model(mlmodel, artifact_path="models_mlflow", input_example=X_examples)
 
 if __name__ == '__main__':
     # Load the dataset
