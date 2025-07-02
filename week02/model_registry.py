@@ -38,7 +38,9 @@ class MLflowModelRegistry:
         experiments = self.client.search_experiments(view_type=ViewType.ALL, filter_string=filter_string)
         for exp in experiments:
             print(f"Experiment ID: {exp.experiment_id}, Name: {exp.name}, Artifact Location: {exp.artifact_location}")
+
         pass
+        return experiments
 
     def create_experiment(self, name, artifact_location=None):
         """
@@ -56,7 +58,7 @@ class MLflowModelRegistry:
             print(f"Error creating experiment: {e}")
             return None
         
-    def search_best_runs(self, experiment_id:int=None, filter_string:str=None, max_results:int=5, order_by:str=None):
+    def search_runs(self, experiment_id:str=None, filter_string:str=None, max_results:int=5, order_by:str=None):
         """
         Search for runs in a specific experiment.
         """
@@ -66,7 +68,7 @@ class MLflowModelRegistry:
         try:
             # If filter_string is not provided, search all runs in the experiment            
             runs = self.client.search_runs(
-                experiment_ids=str(experiment_id),
+                experiment_ids=experiment_id,
                 filter_string=filter_string,
                 run_view_type=ViewType.ALL,
                 max_results=max_results,
@@ -192,12 +194,12 @@ class MLflowModelRegistry:
         except Exception as e:
             print(f"Error retrieving artifact: {e}")
 
-    def test_registered_model(self, model_name, model_version, X_test, y_test):
+    def test_registered_model(self, experiment_name, model_name, model_version, X_test, y_test):
         """
         Test a registered model by name and alias.
         """
         
-        print(f"\nTesting registered model: {model_name} with alias: {model_version}")
+        print(f"\nTesting registered model: {model_name}, Version: {model_version}")
 
         try:
 
@@ -208,17 +210,24 @@ class MLflowModelRegistry:
             model = mlflow.pyfunc.load_model(model_uri)
             print(f"Model loaded successfully from URI: {model_uri}")
             
+            # Extract metadata from the model
             loader_module = model.metadata.flavors['python_function']['loader_module']
-            model_class = 'xgboost'
-            if 'xgboost' in loader_module:
-                print("Model is an XGBoost model.")
-            elif 'sklearn' in loader_module:
-                print("Model is a Scikit-learn model.")
-                model_class = 'sklearn'
-            else:
-                print(f"Model is of type: {loader_module}")
             model_size_mb = model.metadata._model_size_bytes/1000/1000
-            print(f"Model class: {model_class}, Model size: {model_size_mb:.2f} MB")
+            model_run_id = model.metadata.run_id
+            model_experiment_id = self.search_experiments(experiment_name)[0].experiment_id
+
+            # Extract model class from tags
+            filter_string = f"attributes.run_id='{model_run_id}'"
+            runs = self.client.search_runs(experiment_ids=model_experiment_id, filter_string=filter_string)
+            model_class = 'N/A'
+            if 'model' in list(runs[0].data.tags.keys()):
+                model_class = runs[0].data.tags['model']
+            elif 'estimator_class' in list(runs[0].data.tags.keys()):
+                model_class = runs[0].data.tags['estimator_class']
+            
+            print(f"Model run ID: {model_run_id}")
+            print(f"Model experiment ID: {model_experiment_id}")
+            print(f"Model-Source: {loader_module}, Model type: {model_class}, Model size: {model_size_mb:.2f} MB")
 
             # Make predictions
             start_time = time.time()
@@ -248,7 +257,7 @@ def register_models():
     registry.create_experiment('test-experiment-1')
     registry.search_experiments()
 
-    best_runs = registry.search_best_runs(experiment_id=1, filter_string="metrics.rmse < 7", max_results=10, order_by="metrics.rmse ASC")
+    best_runs = registry.search_runs(experiment_id='1', filter_string="metrics.rmse < 7", max_results=10, order_by="metrics.rmse ASC")
 
     # #Example of registering a model to the model registry
     # run_id = "43f4a758f3434176a5f6e0d8eb078d05"  # Replace with your actual run ID
@@ -276,17 +285,17 @@ def register_models():
     
     model_version = "15"
     model_type = "XGBRegressor"
-    registry.set_registered_model_alias(name="nyc-taxi-regressor", alias="Testing", version=model_version)
-    registry.update_model_version(name="nyc-taxi-regressor", version="15", description=f"Updated description for version {model_version}. {model_type} with best RMSE for NYC Taxi duration prediction. RMSE = 6.53")
+    registry.set_registered_model_alias(name="nyc-taxi-regressor", alias=f"Testing{model_version}", version=model_version)
+    registry.update_model_version(name="nyc-taxi-regressor", version=model_version, description=f"Updated description for version {model_version}. {model_type} with best RMSE for NYC Taxi duration prediction. RMSE = 6.53")
 
     model_version = "16"
     model_type = " GradientBoostingRegressor"
-    registry.set_registered_model_alias(name="nyc-taxi-regressor", alias="Testing", version=model_version)
+    registry.set_registered_model_alias(name="nyc-taxi-regressor", alias=f"Testing{model_version}", version=model_version)
     registry.update_model_version(name="nyc-taxi-regressor", version=model_version, description=f"Updated description for version {model_version}. {model_type} with best RMSE for NYC Taxi duration prediction. RMSE = 6.53")
 
     model_version = "17"
     model_type = "RandomForestRegressor"
-    registry.set_registered_model_alias(name="nyc-taxi-regressor", alias="Testing", version=model_version)
+    registry.set_registered_model_alias(name="nyc-taxi-regressor", alias=f"Testing{model_version}", version=model_version)
     registry.update_model_version(name="nyc-taxi-regressor", version=model_version, description=f"Updated description for version {model_version}. {model_type} with best RMSE for NYC Taxi duration prediction. RMSE = 6.53")
 
     pass
@@ -323,18 +332,30 @@ def retrieve_registered_models():
     path = "preprocessor"
     dst_path = '.'
     dv = registry.retrieve_artifact_from_run(run_id, path, dst_path=dst_path)
+
+    # Example of searching for runs in an experiment using their run ID
+    experiment = registry.search_experiments(mlflow_experiment_name)
+    experiment_id = experiment[0].experiment_id  # Replace with your actual experiment ID
+    run_id = '43f4a758f3434176a5f6e0d8eb078d05'
+    filter_string = f"attributes.run_id='{run_id}'"
+    registry.search_runs(experiment_id=experiment_id, filter_string=filter_string)
     
     model_name = "nyc-taxi-regressor"
     model_version = "15"
-    registry.test_registered_model(model_name, model_version, X_test, y_test)
+    registry.test_registered_model(mlflow_experiment_name, model_name, model_version, X_test, y_test)
 
     model_name = "nyc-taxi-regressor"
     model_version = "16"
-    registry.test_registered_model(model_name, model_version, X_test, y_test)
+    registry.test_registered_model(mlflow_experiment_name, model_name, model_version, X_test, y_test)
 
     model_name = "nyc-taxi-regressor"
     model_version = "17"
-    registry.test_registered_model(model_name, model_version, X_test, y_test)
+    registry.test_registered_model(mlflow_experiment_name, model_name, model_version, X_test, y_test)
+
+    model_version = "15"
+    model_type = "XGBRegressor"
+    registry.set_registered_model_alias(name="nyc-taxi-regressor", alias="Production", version=model_version)
+    registry.update_model_version(name="nyc-taxi-regressor", version=model_version, description=f"Updated description for version {model_version}. {model_type} with best RMSE for NYC Taxi duration prediction. RMSE = 6.53")
 
     pass
 
