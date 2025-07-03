@@ -9,4 +9,7 @@ wheels/
 # Virtual environments
 .venv
 models/*
+mlflow/*
 mlruns/*
+*mlflow_cases*
+*.db
