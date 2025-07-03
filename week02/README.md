@@ -4,7 +4,10 @@
 
 1. [Track Model Development](#01-track-model-development)
 2. [Model Registry](#02-model-registry)  
-3. [Remote Tracking Server](#03-setup-remote-tracking-server)   
+3. [Remote Experiment Tracking](#03-setup-remote-mlflow)
+    3.1 [Setup Remote Data Lake](#031-step-1-setup-remote-data-lake)  
+    3.2 [Setup Remote Database](#032-step-2-setup-remote-database)  
+    3.3 [Setup Remote Tracking Server](#033-step-3-setup-remote-tracking-server)  
 
 # Visual Summary
 ![Kiku](Images/W2-Experiment-Tracking_v2.png)
@@ -28,12 +31,13 @@
     - Compare each registered model's size, training time, run time and performance on the test-set
 - Elevate a model to Production status (i.e. set Tags)
 
-### 3. Remote Tracking Server <a name="03-setup-remote-tracking-server"></a>
-#### 3.1. Create an EC2 instance to use as the remote tracking-server
-#### 3.2. Create an S3 bucket to store the artifacts
-#### 3.3. Create a PostgreSQL database in RDS to use as the mlflow database containing all metdadata
 
-### **Tracking Server** ###
+
+### 3. Remote Experiment Tracking <a name="03-setup-remote-mlflow"></a>
+#### 3.1. Create an S3 bucket to store the artifacts <a name="031-step-1-setup-remote-data-lake"></a>
+#### 3.2. Create a PostgreSQL database in RDS to use as the mlflow database containing all metdadata <a name="032-step-2-setup-remote-database"></a>
+#### 3.3. Setup Remote Tracking Server <a name="033-step-3-setup-remote-tracking-server"></a>
+**Create an EC2 instance to use as the remote tracking-server**
 - Configure ssh access with key-pair file
 - Update packages:
 ```bash
