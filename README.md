@@ -31,4 +31,4 @@ sar -u 5
 
 
 ## 2. Experiment Tracking
-![Experiment-TRacking-Visual-Summary](week02/Images/W2-Experiment-Tracking_v2.png)
+![Experiment-TRacking-Visual-Summary](/Visual_Summaries/W2-Experiment-Tracking_v2.png)

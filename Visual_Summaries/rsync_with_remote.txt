@@ -1,0 +1,1 @@
+rsync -a Visual_Summaries/ ubuntu@mlops-zc:mlops-dlp/Visual_Summaries/
