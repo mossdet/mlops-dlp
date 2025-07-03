@@ -12,7 +12,7 @@
 # Visual Summary
 ![Kiku](Images/W2-Experiment-Tracking_v2.png)
 
-### 1. Track model development <a name="01-track-model-development"></a>
+## 1. Track model development <a name="01-track-model-development"></a>
 ### Use Class [NYCTaxiDurationPrediction](duration_prediction.py)
 - Setup mlflow backend store / tracking server
 - Pre-process data, train models and optimize hyperparameters with optuna
@@ -21,7 +21,7 @@
 
 
 
-### 2. Model Registry <a name="02-model-registry"></a>
+## 2. Model Registry <a name="02-model-registry"></a>
 ### Use Class [NYCTaxiDurationPrediction](model_registry.py)
 - Search runs in an experiment and show each run's performance
 - Register a model
@@ -33,10 +33,10 @@
 
 
 
-### 3. Remote Experiment Tracking <a name="03-setup-remote-mlflow"></a>
-#### 3.1. Create an S3 bucket to store the artifacts <a name="031-step-1-setup-remote-data-lake"></a>
-#### 3.2. Create a PostgreSQL database in RDS to use as the mlflow database containing all metdadata <a name="032-step-2-setup-remote-database"></a>
-#### 3.3. Setup Remote Tracking Server <a name="033-step-3-setup-remote-tracking-server"></a>
+## 3. Remote Experiment Tracking <a name="03-setup-remote-mlflow"></a>
+### 3.1. Create an S3 bucket to store the artifacts <a name="031-step-1-setup-remote-data-lake"></a>
+### 3.2. Create a PostgreSQL database in RDS to use as the mlflow database containing all metdadata <a name="032-step-2-setup-remote-database"></a>
+### 3.3. Setup Remote Tracking Server <a name="033-step-3-setup-remote-tracking-server"></a>
 **Create an EC2 instance to use as the remote tracking-server**
 - Configure ssh access with key-pair file
 - Update packages:
