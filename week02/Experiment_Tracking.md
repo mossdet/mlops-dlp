@@ -1,6 +1,6 @@
-# What is covered:
+# Experiment tracking
 
-### 1. Experiment tracking
+### 1. Track model development
 - Setup mlflow backend store / tracking server
 - Pre-process data, train models and optimize hyperparameters with optuna
 - Log the models' parameters to mlflow
@@ -18,6 +18,10 @@
 
 ### 4. Elevate a model to Production status (i.e. set Tags)
 
-
+<br><br>
+# Remote experiment tracking
+#### 1. Create an EC2 instance to use as the remote tracking-server
+#### 2. Create an S3 bucket to store the artifacts
+#### 3. Create a PostgreSQL database in RDS to use as the mlflow database containing all metdadata
 
 
