@@ -8,9 +8,8 @@
 
 # Experiment tracking
 
-<a name="01-track-model-development"></a>
 
-### 1. Track model development
+### 1. Track model development <a name="01-track-model-development"></a>
 ### Use Class [NYCTaxiDurationPrediction](duration_prediction.py)
 - Setup mlflow backend store / tracking server
 - Pre-process data, train models and optimize hyperparameters with optuna
@@ -19,8 +18,7 @@
 
 
 
-<a name="02-model-registry"></a>
-### 2. Model Registry
+### 2. Model Registry <a name="02-model-registry"></a>
 ### Use Class [NYCTaxiDurationPrediction](model_registry.py)
 - Search runs in an experiment and show each run's performance
 - Register a model
