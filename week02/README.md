@@ -10,7 +10,7 @@
     3.3 [Setup Remote Tracking Server](#033-step-3-setup-remote-tracking-server)  
 
 # Visual Summary
-![Kiku](Images/W2-Experiment-Tracking_v2.png)
+![Experiment-TRacking-Visual-Summary](Images/W2-Experiment-Tracking_v2.png)
 
 ## 1. Track model development <a name="01-track-model-development"></a>
 ### Use Class [NYCTaxiDurationPrediction](duration_prediction.py)
