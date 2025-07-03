@@ -1,4 +1,4 @@
-# MLops
+# MLOps
 
 ## 📚 Index
 
