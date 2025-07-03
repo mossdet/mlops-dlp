@@ -2,9 +2,9 @@
 
 ## 📚 Index
 
-1. [Track Model Development](#01-track-model-development)
-2. [Model Registry](#02-model-registry)  
-3. [Remote Experiment Tracking](#03-setup-remote-mlflow)
+1. [Track Model Development](#01-track-model-development)<br>
+2. [Model Registry](#02-model-registry)<br>
+3. [Remote Experiment Tracking](#03-setup-remote-mlflow)<br>
     3.1 [Setup Remote Data Lake](#031-step-1-setup-remote-data-lake)  
     3.2 [Setup Remote Database](#032-step-2-setup-remote-database)  
     3.3 [Setup Remote Tracking Server](#033-step-3-setup-remote-tracking-server)  
