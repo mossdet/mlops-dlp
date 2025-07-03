@@ -6,8 +6,8 @@
 2. [Model Registry](#02-model-registry)  
 3. [Remote Tracking Server](#03-setup-remote-tracking-server)   
 
-# Experiment tracking
-
+# Visual Summary
+![Kiku](Images/W2-Experiment-Tracking_v2.png)
 
 ### 1. Track model development <a name="01-track-model-development"></a>
 ### Use Class [NYCTaxiDurationPrediction](duration_prediction.py)
@@ -29,9 +29,9 @@
 - Elevate a model to Production status (i.e. set Tags)
 
 ### 3. Remote Tracking Server <a name="03-setup-remote-tracking-server"></a>
-#### 1. Create an EC2 instance to use as the remote tracking-server
-#### 2. Create an S3 bucket to store the artifacts
-#### 3. Create a PostgreSQL database in RDS to use as the mlflow database containing all metdadata
+#### 3.1. Create an EC2 instance to use as the remote tracking-server
+#### 3.2. Create an S3 bucket to store the artifacts
+#### 3.3. Create a PostgreSQL database in RDS to use as the mlflow database containing all metdadata
 
 ### **Tracking Server** ###
 - Configure ssh access with key-pair file
