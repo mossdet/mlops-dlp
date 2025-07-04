@@ -3,8 +3,10 @@
 ```mermaid
 graph TD
     A[Deployment]-->B[Batch Offline];
-    Note right of B: Run Discontinously
-    A-->C[Online];
-    Note right of C: Run Continously
+    subgraph subA [" "]
+        A
+        noteA[I AM THE FIRST NOTE]
+    end
 
+    A-->C[Online];
 ```
