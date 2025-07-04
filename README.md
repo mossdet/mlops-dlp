@@ -39,3 +39,8 @@ sar -u 5
 ## [3. Orchestrating ML Pipelines](/week03/) <a name="03-orchestration"></a>
 
 ## [4. Deploying ML models](/week04/) <a name="04-deployment"></a>
+```mermaid
+graph TD
+    A[Deployment]-->B[Batch];
+    A-->C[Streaming];
+```
