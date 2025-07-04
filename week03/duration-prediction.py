@@ -4,6 +4,7 @@
 # Standard library
 import pickle
 import argparse
+from pathlib import Path
 
 # Third-party libraries
 import pandas as pd
@@ -13,12 +14,21 @@ from pathlib import Path
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import root_mean_squared_error
 
+# Set the MLflow tracking URI
+mlflow_df_path = "/home/ubuntu/mlops-dlp/mlflow/mlflow.db"
+MLFLOW_TRACKING_URI = f"sqlite:///{mlflow_df_path}"
+mlflow_experiment_name = "nyc-taxi-experiment"
+models_dir=Path('/home/ubuntu/mlops-dlp/mlflow/models/')
+images_dir=Path('/home/ubuntu/mlops-dlp/mlflow/images/')
 
-mlflow.set_tracking_uri("http://localhost:5000")
-mlflow.set_experiment("nyc-taxi-experiment")
 
-models_folder = Path('models')
-models_folder.mkdir(exist_ok=True)
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+mlflow.set_experiment(mlflow_experiment_name)
+models_dir.mkdir(parents=True, exist_ok=True)
+images_dir.mkdir(parents=True, exist_ok=True)
+
+# mlflow.set_tracking_uri("http://localhost:5000")
+# mlflow.set_experiment("nyc-taxi-experiment")
 
 
 
@@ -62,7 +72,7 @@ def train_model(X_train, y_train, X_val, y_val, dv):
             'learning_rate': 0.09585355369315604,
             'max_depth': 30,
             'min_child_weight': 1.060597050922164,
-            'objective': 'reg:linear',
+            'objective': 'reg:squarederror',
             'reg_alpha': 0.018060244040060163,
             'reg_lambda': 0.011658731377413597,
             'seed': 42
@@ -82,9 +92,10 @@ def train_model(X_train, y_train, X_val, y_val, dv):
         rmse = root_mean_squared_error(y_val, y_pred)
         mlflow.log_metric("rmse", rmse)
 
-        with open("models/preprocessor.b", "wb") as f_out:
+        preprocessor_path = models_dir/"preprocessor.b"
+        with open(preprocessor_path, "wb") as f_out:
             pickle.dump(dv, f_out)
-        mlflow.log_artifact("models/preprocessor.b", artifact_path="preprocessor")
+        mlflow.log_artifact(preprocessor_path, artifact_path="preprocessor")
 
         mlflow.xgboost.log_model(booster, artifact_path="models_mlflow")
 
@@ -114,7 +125,7 @@ if __name__ == "__main__":
 
     # Set to False for actual runs, True for testing purposes
     # If testing is True, it will use a fixed year and month for training
-    testing = True
+    testing = False
     if testing:
         year = 2021
         month = 1
