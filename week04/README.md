@@ -24,11 +24,10 @@ graph TD
 ### 2.1 Web Service
 ```mermaid
 graph TD
-
     User[User]--> |Request Taxi Service| Backend[Backend]
-    Backend--> RideDurationService[RideDurationService]
-    RideDurationService--> [30min.]Backend
-    Backend--> User
+    Backend--> |Request| RideDurationService[RideDurationService]
+    RideDurationService-->WebService[Webservice]
+    RideDurationService-->Streaming[Streaming]
 ```
 
 
