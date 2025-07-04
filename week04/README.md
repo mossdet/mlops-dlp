@@ -7,3 +7,16 @@ graph TD
     Online-->WebService[Webservice]
     Online-->Streaming[Streaming]
 ```
+
+## Batch Processing
+
+
+## Online
+
+
+### Web Service
+
+
+### Streaming
+
+
