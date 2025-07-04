@@ -2,19 +2,8 @@
 
 ```mermaid
 graph TD
-    A[Deployment]--> |Discontinous| B[Batch Offline];
-    A--> |Continous| C[Online];
+    Deployment[Deployment]--> |Runs Periodically| Batch[Batch Offline]
+    Deployment--> |Runs Continously| Online[Online]
+    Online-->WebService[Webservice]
+    Online-->Streaming[Streaming]
 ```
-
-<!---
-```mermaid
-graph TD
-    classDef sub opacity:0
-    classDef note fill:#ffd, stroke:#ccb
-    subgraph subB [" "]
-        B
-        noteB[Discontinous]
-    end
-    class subA,subB,subC sub
-    class noteA,noteB,noteC note
--->
