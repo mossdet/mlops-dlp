@@ -14,8 +14,11 @@ graph TD
     - Pull data from database
     - Run model on the data
     - Write prediction results to another database
-    - Another script pulls from results database and shows dashboards 📊 
-
+    - Another script pulls from results database and shows dashboards 📊 📈 💰 
+- Example use cases:
+    - Marketing data:
+        >- predict users about to churn on a daily basis<br>
+        >- send attractive offers to avoid churn
 ## 2. Online Prcoessing
 
 ### 2.1 Web Service
