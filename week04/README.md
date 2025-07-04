@@ -26,9 +26,9 @@ graph TD
 graph TD
 
     User[User]--> |Request Taxi Service| Backend[Backend]
-    Backend-->RideDurationService[Ride Duration Service]
-    RideDurationService-->[30min.]Backend
-    Backend-->User
+    Backend--> RideDurationService[Ride Duration Service]
+    RideDurationService--> [30min.]Backend
+    Backend--> User
 ```
 
 
