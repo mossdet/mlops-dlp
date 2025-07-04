@@ -2,6 +2,7 @@
 # coding: utf-8
 
 # Standard library
+import os
 import pickle
 import argparse
 from pathlib import Path
@@ -125,7 +126,7 @@ if __name__ == "__main__":
 
     # Set to False for actual runs, True for testing purposes
     # If testing is True, it will use a fixed year and month for training
-    testing = False
+    testing = True
     if testing:
         year = 2021
         month = 1
@@ -138,6 +139,7 @@ if __name__ == "__main__":
 
         run_id = run(year=args.year, month=args.month)
 
-
-    with open("run_id.txt", "w") as f:
+    run_id_fpath = Path(os.path.dirname(os.path.abspath(__file__))) / "run_id.txt"
+    run_id_fpath.parent.mkdir(parents=True, exist_ok=True)
+    with open(run_id_fpath, "w") as f:
         f.write(run_id)
