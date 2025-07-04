@@ -4,6 +4,8 @@
 
 1. [Setup EC2 Development Environment](#01-setup-development-environment)<br>
 2. [Experiment Tracking](#02-experiment-tracking)<br>
+3. [Orchestration](#03-orchestration)<br>
+4. [Deployment](#04-eployment)<br>
 
 ## [1. Setup EC2 Development Environment](/week01/) <a name="01-setup-development-environment"></a>
 - Create EC2 Instance
@@ -33,3 +35,7 @@ sar -u 5
 
 ## [2. Experiment Tracking](/week02/) <a name="02-experiment-tracking"></a>
 ![Experiment-TRacking-Visual-Summary](/Visual_Summaries/W2-Experiment-Tracking_v2.png)
+
+## [3. Orchestrating ML Pipelines](/week03/) <a name="03-orchestration"></a>
+
+## [4. Deploying ML models](/week04/) <a name="04-deployment"></a>
