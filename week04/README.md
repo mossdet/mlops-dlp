@@ -6,6 +6,12 @@ graph TD
     A--> |Continous| C[Online];
 ```
 
+```mermaid
+sequenceDiagram
+    participant John
+    Note right of John: Text in note
+```
+
 <!---
 ```mermaid
 graph TD
