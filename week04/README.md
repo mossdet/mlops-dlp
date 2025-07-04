@@ -9,10 +9,14 @@ graph TD
 ```
 
 ## 1. Batch Processing
+- Run the model periodically (hourly, daily, monthly)
+- Usually, a ***scoring job*** performs the following steps:
+    - Pull data from database
+    - Run model on the data
+    - Write prediction results to another database
+    - Another script pulls from results database and shows dashboards 📊 
 
-
-## 2. Online
-
+## 2. Online Prcoessing
 
 ### 2.1 Web Service
 
