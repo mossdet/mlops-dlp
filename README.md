@@ -2,10 +2,10 @@
 
 ## 📚 Index
 
-1. [Setup EC2 Development Environment](/week01/)
-2. [Experiment Tracking](/week02/)
+1. [Setup EC2 Development Environment](#01-setup-development-environment)<br>
+2. [Experiment Tracking](#02-experiment-tracking)<br>
 
-## 1. Setup EC2 Development Environment <a name="01-setup-development-environment"></a>
+## [1. Setup EC2 Development Environment](/week01/) <a name="01-setup-development-environment"></a>
 - Create EC2 Instance
 - Setup ssh access to EC2 instance
 - Install [uv-python ](https://docs.astral.sh/uv/getting-started/installation/) to EC2 instance:
@@ -29,6 +29,5 @@ mlflow ui --backend-store-uri sqlite:///mlflow/mlflow.db
 sar -u 5
 ```
 
-
-## 2. Experiment Tracking <a name="01-setup-development-environment"></a>
+## [2. Experiment Tracking](/week02/) <a name="02-experiment-tracking"></a>
 ![Experiment-TRacking-Visual-Summary](/Visual_Summaries/W2-Experiment-Tracking_v2.png)
