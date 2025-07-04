@@ -17,11 +17,19 @@ graph TD
     - Another script pulls from results database and shows dashboards 📊 📈 💰 
 - Example use cases:
     - Marketing data:
-        >- predict users about to churn on a daily basis<br>
-        >- send attractive offers to avoid churn
-## 2. Online Prcoessing
+        >▶️ predict users about to churn on a daily basis<br>
+        >▶️ send attractive offers to avoid churn
 
+## 2. Online Prcoessing
 ### 2.1 Web Service
+```mermaid
+graph TD
+
+    User[User]--> |Request Taxi Service| Backend[Backend]
+    Backend-->RideDurationService[Ride Duration Service]
+    RideDurationService-->[30min.]Backend
+    Backend-->User
+```
 
 
 ### 2.2 Streaming
