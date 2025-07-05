@@ -28,12 +28,12 @@ graph LR
     classDef note fill:#ffd, stroke:#ccb
 
     User[👩User]--> |Request Taxi Service| Backend[Backend]
-    Backend--> |Request| RideDurationService["Model"]    
-    RideDurationService--> WebService[Webservice]
-    RideDurationService--> Streaming[Streaming]
+    Backend--> |Request| Model["Model"]    
+    Model--> WebService[Webservice]
+    Model--> Streaming[Streaming]
 
     subgraph subRideDurationService ["Ride Duration Service "]
-        RideDurationService
+        Model
     end
 ```
 
