@@ -50,7 +50,7 @@ graph LR
 - The producer pushes events to the consumers and then this producer doesn't expect a response from the consumers.
 ```mermaid
 graph LR
-    Producer[🤖Producer]--> |Pushed Events| Consumer1[Consumer1🤖]
+    Producer[🤖Producer]--> |Pushed Events| Consumer1[Consumer1🤖] 
     Producer[🤖Producer]--> |Pushed Events| Consumer2[Consumer2🤖]
     Producer[🤖Producer]--> |Pushed Events| Consumer3[Consumer3🤖]
     Producer[🤖Producer]--> |Pushed Events| Consumer4[Consumer4🤖]
@@ -61,9 +61,7 @@ graph LR
 graph LR
     User[👩User]--> |Request Taxi Service| Backend[Backend]
     Backend--> |Trip Duration| User
-    Backend--> |Pushed Events| Consumer1[Consumer1🤖]
-    Backend--> |Pushed Events| Consumer2[Consumer2🤖]
-    Backend--> |Pushed Events| Consumer3[Consumer3🤖]
+    Backend--> |Pushed Events| Consumer1[Consumer1🤖] Consumer2[Consumer2🤖]
 
     subgraph noteB [" "]
         Backend -.- note[I AM NOTE]
