@@ -22,11 +22,10 @@ graph TD
 
 ## 2. Online Prcoessing
 ### 2.1 Web Service
-%%{init: {"flowchart": {"htmlLabels": false}} }%%
 ```mermaid
 graph LR
     User[👩User]--> |Request Taxi Service| Backend[Backend]
-    Backend--> |Request| RideDurationService[Ride Duration Service \n (Model)]
+    Backend--> |Request| RideDurationService["Ride Duration Service\n(Model)"]
     RideDurationService-->WebService[Webservice]
     RideDurationService-->Streaming[Streaming]
 ```
