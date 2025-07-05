@@ -91,9 +91,9 @@ graph LR
         Consumer3
     end
 
-    noteConsumer1-->User
-    noteConsumer2-->User
-    noteConsumer3-->User
+    noteConsumer1--> 'Correcetd Trip Duration' User
+    noteConsumer2--> 'Tip Amount' User
+    noteConsumer3--> 'Cost $' User
 
 ```
 
