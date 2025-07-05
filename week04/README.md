@@ -74,7 +74,7 @@ graph LR
     User[👩User]--> |Request Taxi Service| Backend[Backend]
     Backend--> |Trip Duration| User
 
-    subgraph noteBackend [" "] direction TB
+    subgraph noteBackend direction TB
         Backend[Backend]
         note["Events"]
         noteBackend[Backend Service]
