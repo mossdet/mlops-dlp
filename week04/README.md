@@ -26,7 +26,7 @@ graph TD
 graph LR
     User[👩User]--> |Request Taxi Service| Backend[Backend]
     Backend--> |Request| RideDurationService["Ride Duration Service(Model)"]
-    Note right of RideDurationService: Model<br/>some
+    Note right of RideDurationService: Model
     RideDurationService--> WebService[Webservice]
     RideDurationService--> Streaming[Streaming]
 ```
