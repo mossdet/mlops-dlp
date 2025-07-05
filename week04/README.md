@@ -80,8 +80,15 @@ graph LR
         Backend--> note["Initial Duration Prediction"]--> Backend
     end
 
-    subgraph noteConsumer1 ["Tip Prediction"]
-        Consumer1--> note["Tip"]
+    subgraph noteConsumer1 ["Dynamic Trip <br/> Duration Prediction"]
+        Consumer1
     end
+    subgraph noteConsumer1 ["Tip Prediction"]
+        Consumer2
+    end
+    subgraph noteConsumer1 ["Tip Prediction"]
+        Consumer3
+    end
+
 ```
 
