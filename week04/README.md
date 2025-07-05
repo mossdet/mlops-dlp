@@ -83,10 +83,10 @@ graph LR
     subgraph noteConsumer1 ["Dynamic Trip <br/> Duration Prediction"]
         Consumer1
     end
-    subgraph noteConsumer1 ["Tip Prediction"]
+    subgraph noteConsumer2 ["Tip Prediction"]
         Consumer2
     end
-    subgraph noteConsumer1 ["Tip Prediction"]
+    subgraph noteConsumer3 ["Tip Prediction"]
         Consumer3
     end
 
