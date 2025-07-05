@@ -75,11 +75,10 @@ graph LR
     Backend--> |Trip Duration| User
 
     subgraph subBackend [" "] direction TB
-        Backend--> note["Initial Duration Prediction"]
-        note--> Backend
+        Backend--> note["Initial Duration Prediction"]--> Backend
     end
 
-    Backend--> Events[/Pushed Events/]
+    subBackend--> Events[/Pushed Events/]
     Events --> Consumer1[Consumer1🤖] & Consumer2[Consumer2🤖] & Consumer3[Consumer3🤖]
 
     subgraph noteConsumer1 ["Dynamic Trip Duration"]
