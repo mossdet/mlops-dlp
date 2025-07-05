@@ -91,6 +91,8 @@ graph LR
     end
 
     noteConsumer1-->User
+    noteConsumer2-->User
+    noteConsumer3-->User
 
 ```
 
