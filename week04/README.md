@@ -24,6 +24,9 @@ graph TD
 ### 2.1 Web Service
 ```mermaid
 graph LR
+    classDef sub opacity:0
+    classDef note fill:#ffd, stroke:#000
+
     User[👩User]--> |Request Taxi Service| Backend[Backend]
     Backend--> |Request| RideDurationService["Ride Duration Service(Mo)"]    
     RideDurationService--> WebService[Webservice]
