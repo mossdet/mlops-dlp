@@ -28,7 +28,7 @@ graph LR
     classDef note fill:#ffd, stroke:#ccb
 
     User[👩User]--> |Request Taxi Service| Backend[Backend]
-    Backend--> |Request| Model["Model"]
+    Backend--> |"UserID, PickUp, DropOff, ..."| Model["Model"]
     Model--> WebService[Webservice]
     Model--> Streaming[Streaming]
 
