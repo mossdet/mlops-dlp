@@ -1,4 +1,8 @@
 
+# MLOps - Week 4: Model Deployment
+
+This week covers the fundamentals of machine learning model deployment, including different deployment patterns, strategies, and tools used in production environments.
+
 ## 📚 Table of Contents
 - [1. Batch Processing](#1-batch-processing)
 - [2. Online Processing](#2-online-processing)
@@ -16,28 +20,38 @@
   - [4.7 Monitoring and Visualization](#47-monitoring-and-visualization)
   - [4.8 Model Monitoring and Management](#48-model-monitoring-and-management)
   - [4.9 Data Versioning and Management](#49-data-versioning-and-management)
-- [5. Further Reading](#7-further-reading)
+- [5. Further Reading](#5-further-reading)
 
-# Deployment
+# Deployment Overview
+
 ```mermaid
 graph TD
-    Deployment[Deployment]--> |Runs Periodically| Batch[Batch Offline]
-    Deployment--> |Runs Continously| Online[Online]
-    Online-->WebService[Webservice]
-    Online-->Streaming[Streaming]
+    Deployment[Deployment] --> |Runs Periodically| Batch[Batch Offline]
+    Deployment --> |Runs Continuously| Online[Online]
+    Online --> WebService[Web Service]
+    Online --> Streaming[Streaming]
 ```
 
-## 1. Batch Processing 
+## 1. Batch Processing
+
+**Key Characteristics:**
 - Run the model periodically (hourly, daily, monthly)
 - Usually, a ***scoring job*** performs the following steps:
     - Pull data from database
     - Run model on the data
     - Write prediction results to another database
     - Another script pulls from results database and shows dashboards 📊 📈 💰 
-- Example use cases:
-    - Marketing data:
-        >▶️ predict users about to churn on a daily basis<br>
-        >▶️ send attractive offers to avoid churn
+
+**Example Use Cases:**
+- Marketing data:
+    > ▶️ Predict users about to churn on a daily basis<br>
+    > ▶️ Send attractive offers to avoid churn
+- Financial services:
+    > ▶️ Daily credit risk assessment<br>
+    > ▶️ Monthly fraud detection analysis
+- Recommendation systems:
+    > ▶️ Weekly product recommendations<br>
+    > ▶️ Daily content personalization updates
 
 ## 2. Online Processing
 ### 2.1 Web Service
@@ -114,11 +128,22 @@ graph LR
 
 ```
 
-### 2.3 Differences between Web Service and Streaming ***
-- In a web service, the connection between the ***Backend Service*** and the ***Dynamic Ride Duration Service*** is kept alive until the ***Dynamic Ride Duration Service*** sends a response to the ***Backend Service***
-- In streaming, the ***Backend Service*** pushes events to the consumers and doesn't expect a response
-- The consumers process the events and send the results back to the ***Backend Service***, which then sends the results back to the user
-- The consumers can be run in parallel and in different machines, therefore they can be scaled independently
+### 2.3 Differences between Web Service and Streaming
+
+| Aspect | Web Service | Streaming |
+|--------|-------------|-----------|
+| **Communication Pattern** | Request-Response (Synchronous) | Event-driven (Asynchronous) |
+| **Connection** | Connection kept alive until response | Fire-and-forget, no response expected |
+| **Response Time** | Immediate response required | No immediate response required |
+| **Scalability** | Limited by synchronous nature | Highly scalable, parallel processing |
+| **Use Cases** | Real-time predictions, user interactions | Event processing, notifications, analytics |
+| **Examples** | Price estimation, trip duration | Dynamic updates, monitoring, alerts |
+
+**Key Differences:**
+- In a web service, the connection between the ***Backend Service*** and the ***Model Service*** is kept alive until the service sends a response to the ***Backend***
+- In streaming, the ***Backend Service*** pushes events to the consumers and doesn't expect an immediate response
+- The consumers process the events and can send results back to the ***Backend Service*** or directly to other services
+- Streaming consumers can be run in parallel and on different machines, enabling independent scaling
 
 
 
@@ -137,16 +162,58 @@ graph LR
 
 
 
-## 4. Deployment Tools Overview
-- **Model Management and Experiment Tracking**: Tools like MLflow, Weights & Biases, and Kubeflow Pipelines help manage the machine learning lifecycle, including experiment tracking, model versioning, and deployment.
-- **General Orchestration Tools**: Apache Airflow, Prefect, and Dagster are popular tools for orchestrating complex workflows, allowing you to schedule and monitor tasks in a data pipeline.
-- **Containerization and Orchestration Tools**: Docker and Kubernetes are widely used for containerization and orchestration, enabling you to deploy and manage applications in a scalable and efficient manner.
-- **Model Deployment and Serving**: Tools like TensorFlow Serving, TorchServe, and BentoML provide capabilities for deploying and serving machine learning models in production environments.
-- **Data Storage and Management**: Amazon S3, Google Cloud Storage, and PostgreSQL are commonly used for storing and managing data, providing scalable and reliable storage solutions.
-- **Data Processing and Streaming**: Apache Spark and Apache Kafka are powerful tools for processing and streaming data, enabling real-time analytics and data processing at scale.
-- **Monitoring and Visualization**: Grafana, Prometheus, and Kibana are popular tools for monitoring and visualizing data, providing insights into system performance and application metrics.
-- **Model Monitoring and Management**: Tools like Evidently AI and Fiddler help monitor machine learning models in production, providing insights into model performance, data drift, and explainability.
-- **Data Versioning and Management**: DVC, LakeFS, and Delta Lake are tools for versioning and managing data in machine learning projects, enabling reproducibility and collaboration.
+## 4. Deployment Tools
+
+### 4.1 Model Management and Experiment Tracking
+- **MLflow**: Open-source platform for managing ML lifecycle, experiment tracking, and model deployment
+- **Weights & Biases**: Comprehensive ML platform for experiment tracking, dataset versioning, and model management
+- **Kubeflow Pipelines**: Kubernetes-native platform for building and deploying portable ML workflows
+
+### 4.2 General Orchestration Tools
+- **Apache Airflow**: Platform for developing, scheduling, and monitoring workflows
+- **Prefect**: Modern workflow orchestration tool with improved UI and developer experience
+- **Dagster**: Data orchestrator for machine learning, analytics, and ETL
+
+### 4.3 Containerization and Orchestration Tools
+- **Docker**: Platform for developing, shipping, and running applications in containers
+- **Kubernetes**: Container orchestration platform for automating deployment, scaling, and management
+- **Docker Compose**: Tool for defining and running multi-container Docker applications
+
+### 4.4 Model Deployment and Serving
+- **TensorFlow Serving**: Flexible, high-performance serving system for ML models
+- **TorchServe**: PyTorch serving framework for deploying models at scale
+- **BentoML**: Framework for building, shipping, and scaling AI applications
+- **Seldon Core**: Platform for deploying ML models on Kubernetes
+
+### 4.5 Data Storage and Management
+- **Amazon S3**: Object storage service with high availability and durability
+- **Google Cloud Storage**: Unified object storage for developers and enterprises
+- **PostgreSQL**: Advanced open-source relational database
+- **MongoDB**: Document database with high performance and availability
+
+### 4.6 Data Processing and Streaming
+- **Apache Spark**: Unified analytics engine for large-scale data processing
+- **Apache Kafka**: Distributed event streaming platform for high-performance data pipelines
+- **Apache Flink**: Framework for stateful computations over data streams
+- **Redis**: In-memory data structure store for caching and real-time analytics
+
+### 4.7 Monitoring and Visualization
+- **Grafana**: Open-source platform for monitoring and observability
+- **Prometheus**: Open-source monitoring system with time series database
+- **Kibana**: Data visualization dashboard for Elasticsearch
+- **DataDog**: Cloud monitoring service for servers, databases, and services
+
+### 4.8 Model Monitoring and Management
+- **Evidently AI**: Open-source tool for ML model monitoring and testing
+- **Fiddler**: Enterprise platform for ML model performance management
+- **Arize**: ML observability platform for model monitoring and explainability
+- **WhyLabs**: AI observability platform for monitoring data and ML models
+
+### 4.9 Data Versioning and Management
+- **DVC**: Version control system for machine learning projects
+- **LakeFS**: Data version control for data lakes with Git-like operations
+- **Delta Lake**: Open-source storage layer that brings reliability to data lakes
+- **Pachyderm**: Data science platform with version control for data pipelines
 
 
 
