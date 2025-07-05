@@ -24,6 +24,7 @@ graph TD
 ### 2.1 Web Service
 - This service needs to be online always
 - In the case of a TaxiApp, it should be available at all times, providing the user with information like Price and Trip Duration
+- The connection between the ***Backend Service*** and the ***Ride Duration Prediction Service*** is kept alive until the ***Prediction Service*** sends a response to the ***Backend***
 ```mermaid
 graph LR
     classDef sub opacity:0
@@ -35,7 +36,11 @@ graph LR
     Model--> WebService[Webservice]
     Model--> Streaming[Streaming]
 
-    subgraph subRideDurationService ["Ride Duration Service "]
+    subgraph subBackendService ["Backend Service "]
+        Backend
+    end
+
+    subgraph subRideDurationService ["Ride Duration Prediction Service"]
         Model
     end
 ```
@@ -43,9 +48,9 @@ graph LR
 ### 2.2 Streaming
 ```mermaid
 graph LR
-    Producer[🤖Producer]--> |Request| Consumer1[Consumer1🤖]
-    Producer[🤖Producer]--> |Request| Consumer2[Consumer2🤖]
-    Producer[🤖Producer]--> |Request| Consumer3[Consumer3🤖]
-    Producer[🤖Producer]--> |Request| Consumer4[Consumer4🤖]
+    Producer[🤖Producer]--> |Pushed Events| Consumer1[Consumer1🤖]
+    Producer[🤖Producer]--> |Pushed Events| Consumer2[Consumer2🤖]
+    Producer[🤖Producer]--> |Pushed Events| Consumer3[Consumer3🤖]
+    Producer[🤖Producer]--> |Pushed Events| Consumer4[Consumer4🤖]
 ```
 
