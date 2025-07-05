@@ -61,10 +61,10 @@ graph LR
 graph LR
     User[👩User]--> |Request Taxi Service| Backend[Backend]
     Backend--> |Trip Duration| User
-    Backend--> |Pushed Events| Consumer1[Consumer1🤖] & Consumer2[Consumer2🤖]
+    Backend--> |Pushed Events| Consumer1[Consumer1🤖] & Consumer2[Consumer2🤖] & Consumer3[Consumer3🤖]
 
     subgraph noteB [" "]
-        Backend -.- note[I AM NOTE]
+        Backend -.- note["Static(Initial) \n Duration Prediction"]
     end
 ```
 
