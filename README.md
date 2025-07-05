@@ -5,7 +5,7 @@
 1. [Setup EC2 Development Environment](#01-setup-development-environment)<br>
 2. [Experiment Tracking](#02-experiment-tracking)<br>
 3. [Orchestration](#03-orchestration)<br>
-4. [Deployment](#04-eployment)<br>
+4. [Deployment](#04-deployment)<br>
 
 ## [1. Setup EC2 Development Environment](/week01/) <a name="01-setup-development-environment"></a>
 - Create EC2 Instance
