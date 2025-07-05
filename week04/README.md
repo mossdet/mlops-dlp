@@ -29,7 +29,6 @@ graph LR
 
     User[👩User]--> |Request Taxi Service| Backend[Backend]
     Backend--> |Request(UserID, PULocation, DOLOcation, ...)| Model["Model"]
-    Model--> |Trip Duration| Backend
     Model--> WebService[Webservice]
     Model--> Streaming[Streaming]
 
