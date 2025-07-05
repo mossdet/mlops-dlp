@@ -22,6 +22,7 @@ graph TD
 
 ## 2. Online Prcoessing
 ### 2.1 Web Service
+%%{init: {"flowchart": {"htmlLabels": false}} }%%
 ```mermaid
 graph LR
     User[👩User]--> |Request Taxi Service| Backend[Backend]
