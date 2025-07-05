@@ -61,6 +61,6 @@ graph LR
 graph LR
     User[👩User]--> |Request Taxi Service| Backend[Backend]
     Backend--> |Trip Duration| User
-    Note right of Backedn: "Bob thinks"
+    Note right of Backend: "Bob thinks"
 ```
 
