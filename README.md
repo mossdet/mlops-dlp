@@ -1,6 +1,6 @@
 # MLOps Learning Project
 
-This repository contains a comprehensive MLOps (Machine Learning Operations) learning project covering the essential components of machine learning deployment and management in production environments.
+This repository contains an MLOps learning project showcasing the essential components of machine learning deployment and management in production environments.
 
 ## 📚 Table of Contents
 
