@@ -74,8 +74,11 @@ graph LR
     User[👩User]--> |Request Taxi Service| Backend[Backend]
     Backend--> |Trip Duration| User
 
-    subgraph noteBackend [" "]
-        Backend--> note["Initial Duration Prediction"]--> Backend
+    subgraph noteBackend [" "] direction TB
+        Backend[Backend]
+        note["Events"]
+        noteBackend[Backend Service]
+        noteBackend --> note["Initial Duration Prediction"]
     end
 
     noteBackend--> Events[/Pushed Events/]
