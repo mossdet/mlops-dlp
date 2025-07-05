@@ -74,11 +74,11 @@ graph LR
     User[👩User]--> |Request Taxi Service| Backend[Backend]
     Backend--> |Trip Duration| User
 
-    subgraph noteBackend [" "]
-        Backend--> note["Initial Duration Prediction"]--> Backend
+    subgraph subBackend [" "] direction TB
+        Backend--> RideDurationService["Initial Duration Prediction"]--> Backend
     end
 
-    noteBackend--> Events[/Pushed Events/]
+    Backend--> Events[/Pushed Events/]
     Events --> Consumer1[Consumer1🤖] & Consumer2[Consumer2🤖] & Consumer3[Consumer3🤖]
 
     subgraph noteConsumer1 ["Dynamic Trip Duration"]
