@@ -77,7 +77,7 @@ graph LR
     Events --> Consumer1[Consumer1🤖] & Consumer2[Consumer2🤖] & Consumer3[Consumer3🤖]
 
     subgraph noteB [" "]
-        Backend--> note["Initial Duration Prediction"]
+        Backend--> note["Initial Duration Prediction"]--> Backend
     end
 ```
 
