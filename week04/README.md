@@ -44,8 +44,8 @@ graph LR
 ```mermaid
 graph LR
     Producer[🤖Producer]--> |Request| Consumer1[Consumer1🤖]
-    Producer[🤖Producer]--> |Request| Consumer1[Consumer2🤖]
-    Producer[🤖Producer]--> |Request| Consumer1[Consumer3🤖]
-    Producer[🤖Producer]--> |Request| Consumer1[Consumer4🤖]
+    Producer[🤖Producer]--> |Request| Consumer2[Consumer2🤖]
+    Producer[🤖Producer]--> |Request| Consumer3[Consumer3🤖]
+    Producer[🤖Producer]--> |Request| Consumer4[Consumer4🤖]
 ```
 
