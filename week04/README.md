@@ -25,10 +25,14 @@ graph TD
 ```mermaid
 graph LR
     User[👩User]--> |Request Taxi Service| Backend[Backend]
-    Backend--> |Request| RideDurationService["Ride Duration Service(Model)"]
-    Note right of RideDurationService: Model
+    Backend--> |Request| RideDurationService["Ride Duration Service(Mo)"]    
     RideDurationService--> WebService[Webservice]
     RideDurationService--> Streaming[Streaming]
+
+    subgraph subRideDurationService [" "]
+        RideDurationService
+        noteRideDurationService[I AM THE SECOND NOTE]
+    end
 ```
 
 
