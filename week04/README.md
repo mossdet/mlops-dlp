@@ -32,7 +32,7 @@ graph LR
     RideDurationService--> WebService[Webservice]
     RideDurationService--> Streaming[Streaming]
 
-    subgraph subRideDurationService [" "]
+    subgraph subRideDurationService ["Model"]
         RideDurationService
         noteRideDurationService[I AM THE SECOND NOTE]
     end
