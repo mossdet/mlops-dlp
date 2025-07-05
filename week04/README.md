@@ -40,7 +40,7 @@ graph LR
         Backend
     end
 
-    subgraph subRideDurationService ["Ride Duration Service"]
+    subgraph subRideDurationService ["Ride Duration <br/> Prediction Service"]
         Model
     end
 ```
@@ -80,13 +80,13 @@ graph LR
         Backend--> note["Initial Duration Prediction"]--> Backend
     end
 
-    subgraph noteConsumer1 ["Dynamic Trip <br/> Duration Prediction"]
+    subgraph noteConsumer1 ["Dynamic Trip Duration"]
         Consumer1
     end
     subgraph noteConsumer2 ["Tip Prediction"]
         Consumer2
     end
-    subgraph noteConsumer3 ["Tip Prediction"]
+    subgraph noteConsumer3 ["Cost Prediction"]
         Consumer3
     end
 
