@@ -81,7 +81,7 @@ graph LR
     end
 
     subgraph noteConsumer1 ["Tip Prediction"]
-        Backend--> note["Initial Duration Prediction"]--> Backend
+        Consumer1--> note["Tip"]
     end
 ```
 
