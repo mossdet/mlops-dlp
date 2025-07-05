@@ -1,6 +1,6 @@
 # Deployment
 
-## 📚 Index
+## 📚 Table of Contents
 - [1. Batch Processing](#1-batch-processing)
 - [2. Online Processing](#2-online-processing)
   - [2.1 Web Service](#21-web-service)
@@ -17,9 +17,7 @@
   - [4.7 Monitoring and Visualization](#47-monitoring-and-visualization)
   - [4.8 Model Monitoring and Management](#48-model-monitoring-and-management)
   - [4.9 Data Versioning and Management](#49-data-versioning-and-management)
-- [5. Deployment Example: TaxiApp](#5-deployment-example-taxiapp)
-- [6. Summary in 5 Bullet Points](#6-summary-in-5-bulletpoints)
-- [7. Further Reading](#7-further-reading)
+- [5. Further Reading](#7-further-reading)
 
 
 ```mermaid
@@ -123,6 +121,8 @@ graph LR
 - The consumers process the events and send the results back to the ***Backend Service***, which then sends the results back to the user
 - The consumers can be run in parallel and in different machines, therefore they can be scaled independently
 
+
+
 ## 3. Deployment Strategies
 - **Blue/Green Deployment**: Two identical environments (blue and green) are maintained.
     - One environment is live (blue) while the other (green) is idle.
@@ -136,106 +136,7 @@ graph LR
 - **A/B Testing**: Two versions (A and B) are deployed to different user segments.
     - The performance of both versions is compared to determine which one is better.
 
-## 4. Deployment Tools
-### 4.1 Model Management and Experiment Tracking
-- **MLflow**: Open-source platform for managing the machine learning lifecycle, including experimentation, reproducibility, and deployment
-- **Weights & Biases**: Tool for experiment tracking, dataset versioning, and model management, providing a user-friendly interface for visualizing and comparing experiments
-- **Kubeflow Pipelines**: Platform for building and deploying portable, scalable machine learning workflows based on Kubernetes
-- **DVC (Data Version Control)**: Open-source version control system for managing machine learning projects, allowing you to track experiments, datasets, and models
-- **TensorBoard**: Visualization toolkit for TensorFlow that provides insights into model training, performance, and debugging
 
-### 4.2 General Orchestration Tools
-- **Apache Airflow**: Open-source platform to programmatically author, schedule, and monitor workflows
-- **Prefect**: Open-source workflow management system that allows you to build, run, and monitor data workflows
-- **Dagster**: Open-source data orchestrator for machine learning
-- **Luigi**: Python package for building complex pipelines of batch jobs, handling dependency resolution, workflow management, and visualization
-- **Kestra**: Open-source orchestration platform for managing data workflows, providing features like scheduling, monitoring, and versioning
-
-### 4.3 Containerization and Orchestration Tools
-- **Docker**: Containerization platform that allows you to package applications and their dependencies into containers
-- **Kubernetes**: Container orchestration platform that automates the deployment, scaling, and management of containerized applications
-- **AWS Lambda**: Serverless computing service that allows you to run code without provisioning or managing servers
-- **AWS SageMaker**: Fully managed service that provides every developer and data scientist with the ability to build, train, and deploy machine learning models quickly
-- **AWS ECS**: Fully managed container orchestration service that supports Docker containers
-- **AWS EKS**: Managed Kubernetes service that makes it easy to run Kubernetes on AWS without needing to install and operate your own Kubernetes control plane or nodes
-
-## 4.4 Model Deployment and Serving
-- **TensorFlow Serving**: Flexible, high-performance serving system for machine learning models, designed for production environments
-- **TorchServe**: Tool for serving PyTorch models in production, providing features like multi-model serving, model versioning, and logging
-- **BentoML**: Framework for serving, managing, and deploying machine learning models, supporting multiple frameworks like TensorFlow, PyTorch, and Scikit-learn
-- **Seldon Core**: Open-source platform for deploying machine learning models on Kubernetes, providing features like model versioning, A/B testing, and canary deployments
-### 4.5 Data Storage and Management
-- **Amazon S3**: Scalable object storage service for storing and retrieving any amount of data
-- **Google Cloud Storage**: Unified object storage service for storing and accessing data on Google Cloud
-- **Azure Blob Storage**: Object storage solution for the cloud, designed for storing large amounts of unstructured data
-- **PostgreSQL**: Open-source relational database management system known for its robustness and extensibility
-- **MongoDB**: NoSQL database that uses a document-oriented data model, allowing for flexible and scalable data storage
-- **Apache Cassandra**: Distributed NoSQL database designed to handle large amounts of data across many commodity servers, providing high availability with no single point of failure
-- **Elasticsearch**: Distributed search and analytics engine, commonly used for log and event data analysis, providing real-time search capabilities
-### 4.6 Data Processing and Streaming
-- **Apache Spark**: Unified analytics engine for big data processing, with built-in modules for streaming, SQL, machine learning, and graph processing
-- **Apache Kafka**: Distributed event streaming platform capable of handling trillions of events a day, often used for building real-time data pipelines and streaming applications
-- **Dask**: Flexible parallel computing library for analytics, enabling you to scale Python code from a single machine to a cluster, providing advanced parallel computing capabilities for data processing tasks
-
-### 4.7 Monitoring and Visualization
-- **Grafana**: Open-source platform for monitoring and observability, allowing you to visualize and analyze metrics from various data sources
-- **Prometheus**: Open-source monitoring and alerting toolkit designed for reliability and scalability, often used with Grafana for visualization
-- **Kibana**: Visualization tool for Elasticsearch, providing a user interface for exploring and visualizing data stored in Elasticsearch
-### 4.8 Model Monitoring and Management
-- **Evidently AI**: Open-source tool for monitoring machine learning models, providing features like data drift detection, model performance monitoring, and visualization of model metrics
-- **Fiddler**: Model performance monitoring and explainability platform, providing insights into model behavior and performance over time
-### 4.9 Data Versioning and Management
-- **DVC (Data Version Control)**: Open-source version control system for managing machine learning projects, allowing you to track experiments, datasets, and models
-- **LakeFS**: Open-source data versioning system for data lakes, enabling you to manage and version large datasets in a Git-like manner
-- **Delta Lake**: Open-source storage layer that brings ACID transactions to Apache Spark and big data workloads, providing features like schema enforcement, time travel, and data versioning
-## 4. Deployment Tools Overview
-### 4.1 Model Management and Experiment Tracking Tools
-- **MLflow**: Open-source platform for managing the machine learning lifecycle, including experimentation, reproducibility, and deployment
-- **Weights & Biases**: Tool for experiment tracking, dataset versioning, and model management, providing a user-friendly interface for visualizing and comparing experiments
-- **Kubeflow Pipelines**: Platform for building and deploying portable, scalable machine learning workflows based on Kubernetes
-- **DVC (Data Version Control)**: Open-source version control system for managing machine learning projects, allowing you to track experiments, datasets, and models
-- **TensorBoard**: Visualization toolkit for TensorFlow that provides insights into model training, performance, and debugging
-### 4.2 General Orchestration Tools
-- **Apache Airflow**: Open-source platform to programmatically author, schedule, and monitor workflows
-- **Prefect**: Open-source workflow management system that allows you to build, run, and monitor data workflows
-- **Dagster**: Open-source data orchestrator for machine learning
-- **Luigi**: Python package for building complex pipelines of batch jobs, handling dependency resolution, workflow management, and visualization
-- **Kestra**: Open-source orchestration platform for managing data workflows, providing features like scheduling, monitoring, and versioning
-### 4.3 Containerization and Orchestration Tools
-- **Docker**: Containerization platform that allows you to package applications and their dependencies into containers
-- **Kubernetes**: Container orchestration platform that automates the deployment, scaling, and management of containerized applications
-- **AWS Lambda**: Serverless computing service that allows you to run code without provisioning or managing servers
-- **AWS SageMaker**: Fully managed service that provides every developer and data scientist with the ability to build, train, and deploy machine learning models quickly
-- **AWS ECS**: Fully managed container orchestration service that supports Docker containers
-- **AWS EKS**: Managed Kubernetes service that makes it easy to run Kubernetes on AWS without needing to install and operate your own Kubernetes control plane or nodes
-### 4.4 Model Deployment and Serving Tools
-- **TensorFlow Serving**: Flexible, high-performance serving system for machine learning models, designed for production environments
-- **TorchServe**: Tool for serving PyTorch models in production, providing features like multi-model serving, model versioning, and logging
-- **BentoML**: Framework for serving, managing, and deploying machine learning models, supporting multiple frameworks like TensorFlow, PyTorch, and Scikit-learn
-- **Seldon Core**: Open-source platform for deploying machine learning models on Kubernetes, providing features like model versioning, A/B testing, and canary deployments
-### 4.5 Data Storage and Management Tools
-- **Amazon S3**: Scalable object storage service for storing and retrieving any amount of data
-- **Google Cloud Storage**: Unified object storage service for storing and accessing data on Google Cloud
-- **Azure Blob Storage**: Object storage solution for the cloud, designed for storing large amounts of unstructured data
-- **PostgreSQL**: Open-source relational database management system known for its robustness and extensibility
-- **MongoDB**: NoSQL database that uses a document-oriented data model, allowing for flexible and scalable data storage
-- **Apache Cassandra**: Distributed NoSQL database designed to handle large amounts of data across many commodity servers, providing high availability with no single point of failure
-- **Elasticsearch**: Distributed search and analytics engine, commonly used for log and event data analysis, providing real-time search capabilities
-### 4.6 Data Processing and Streaming Tools
-- **Apache Spark**: Unified analytics engine for big data processing, with built-in modules for streaming, SQL, machine learning, and graph processing
-- **Apache Kafka**: Distributed event streaming platform capable of handling trillions of events a day, often used for building real-time data pipelines and streaming applications
-- **Dask**: Flexible parallel computing library for analytics, enabling you to scale Python code from a single machine to a cluster, providing advanced parallel computing capabilities for data processing tasks
-### 4.7 Monitoring and Visualization Tools
-- **Grafana**: Open-source platform for monitoring and observability, allowing you to visualize and analyze metrics from various data sources
-- **Prometheus**: Open-source monitoring and alerting toolkit designed for reliability and scalability, often used with Grafana for visualization
-- **Kibana**: Visualization tool for Elasticsearch, providing a user interface for exploring and visualizing data stored in Elasticsearch
-### 4.8 Model Monitoring and Management Tools
-- **Evidently AI**: Open-source tool for monitoring machine learning models, providing features like data drift detection, model performance monitoring, and visualization of model metrics
-- **Fiddler**: Model performance monitoring and explainability platform, providing insights into model behavior and performance over time
-### 4.9 Data Versioning and Management Tools
-- **DVC (Data Version Control)**: Open-source version control system for managing machine learning projects, allowing you to track experiments, datasets, and models
-- **LakeFS**: Open-source data versioning system for data lakes, enabling you to manage and version large datasets in a Git-like manner
-- **Delta Lake**: Open-source storage layer that brings ACID transactions to Apache Spark and big data workloads, providing features like schema enforcement, time travel, and data versioning
 
 ## 4. Deployment Tools Overview
 - **Model Management and Experiment Tracking**: Tools like MLflow, Weights & Biases, and Kubeflow Pipelines help manage the machine learning lifecycle, including experiment tracking, model versioning, and deployment.
@@ -248,25 +149,9 @@ graph LR
 - **Model Monitoring and Management**: Tools like Evidently AI and Fiddler help monitor machine learning models in production, providing insights into model performance, data drift, and explainability.
 - **Data Versioning and Management**: DVC, LakeFS, and Delta Lake are tools for versioning and managing data in machine learning projects, enabling reproducibility and collaboration.
 
-### 5. Deployment Example: TaxiApp
-- In the TaxiApp, the deployment process involves several steps:
-    - **Model Training**: The model is trained on historical data to predict trip duration, cost, and tip amount.
-    - **Model Deployment**: The trained model is deployed as a web service using TensorFlow Serving or TorchServe, allowing the backend service to make predictions in real-time.
-    - **Data Storage**: The data is stored in Amazon S3 or Google Cloud Storage, providing scalable and reliable storage for the model and data.
-    - **Data Processing**: Apache Spark is used to process and analyze the data, enabling real-time analytics and data processing.
-    - **Monitoring and Visualization**: Grafana and Prometheus are used to monitor the performance of the deployed model, providing insights into model performance, data drift, and system metrics.
-    - **Model Monitoring**: Evidently AI is used to monitor the deployed model, providing insights into model performance, data drift, and explainability.
-    - **Data Versioning**: DVC is used to version the data and models, enabling reproducibility and collaboration among data scientists and engineers.
 
 
-## 6. Summary in 5 Bullet Points
-- **Batch Processing**: Run models periodically to generate predictions, often used for marketing and user engagement.
-- **Online Processing**: Provide real-time predictions through web services and streaming, allowing for immediate user interaction and feedback.
-- **Deployment Strategies**: Use techniques like Blue/Green, Canary, and Rolling deployments to ensure smooth transitions between model versions and minimize downtime.
-- **Deployment Tools**: Utilize tools like MLflow, Docker, and Kubernetes for managing the machine learning lifecycle, orchestrating workflows, and deploying models in production.
-- **Monitoring and Management**: Implement monitoring tools like Grafana and Evidently AI to track model performance, detect data drift, and ensure the reliability of deployed models
-
-## 7. Further Reading
+## 5. Further Reading
 - [MLOps: Model Deployment](https://ml-ops.org/en/latest/model_deployment/)
 - [MLOps: Model Monitoring](https://ml-ops.org/en/latest/model_monitoring/)
 - [MLOps: Model Management](https://ml-ops.org/en/latest/model_management/)
