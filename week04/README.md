@@ -1,5 +1,27 @@
 # Deployment
 
+## 📚 Index
+- [1. Batch Processing](#1-batch-processing)
+- [2. Online Processing](#2-online-processing)
+  - [2.1 Web Service](#21-web-service)
+  - [2.2 Streaming](#22-streaming)
+  - [2.3 Differences between Web Service and Streaming](#23-differences-between-web-service-and-streaming)
+- [3. Deployment Strategies](#3-deployment-strategies)
+- [4. Deployment Tools](#4-deployment-tools)
+  - [4.1 Model Management and Experiment Tracking](#41-model-management-and-experiment-tracking)
+  - [4.2 General Orchestration Tools](#42-general-orchestration-tools)
+  - [4.3 Containerization and Orchestration Tools](#43-containerization-and-orchestration-tools)
+  - [4.4 Model Deployment and Serving](#44-model-deployment-and-serving)
+  - [4.5 Data Storage and Management](#45-data-storage-and-management)
+  - [4.6 Data Processing and Streaming](#46-data-processing-and-streaming)
+  - [4.7 Monitoring and Visualization](#47-monitoring-and-visualization)
+  - [4.8 Model Monitoring and Management](#48-model-monitoring-and-management)
+  - [4.9 Data Versioning and Management](#49-data-versioning-and-management)
+- [5. Deployment Example: TaxiApp](#5-deployment-example-taxiapp)
+- [6. Summary in 5 Bullet Points](#6-summary-in-5-bulletpoints)
+- [7. Further Reading](#7-further-reading)
+
+
 ```mermaid
 graph TD
     Deployment[Deployment]--> |Runs Periodically| Batch[Batch Offline]
@@ -8,7 +30,7 @@ graph TD
     Online-->Streaming[Streaming]
 ```
 
-## 1. Batch Processing
+## 1. Batch Processing 
 - Run the model periodically (hourly, daily, monthly)
 - Usually, a ***scoring job*** performs the following steps:
     - Pull data from database
