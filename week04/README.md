@@ -34,7 +34,6 @@ graph LR
 
     subgraph subRideDurationService ["Ride Duration Service "]
         RideDurationService
-        noteRideDurationService[dd]
     end
 ```
 
