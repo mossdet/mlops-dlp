@@ -75,8 +75,8 @@ graph LR
     Backend--> |Trip Duration| User
 
     subgraph subBackend [" "] direction TB
-        Backend--> RideDurationService["Initial Duration Prediction"]
-        RideDurationService--> Backend
+        Backend--> note["Initial Duration Prediction"]
+        note--> Backend
     end
 
     Backend--> Events[/Pushed Events/]
