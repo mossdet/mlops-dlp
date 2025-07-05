@@ -20,8 +20,10 @@ graph TD
         >▶️ predict users about to churn on a daily basis<br>
         >▶️ send attractive offers to avoid churn
 
-## 2. Online Prcoessing
+## 2. Online Processing
 ### 2.1 Web Service
+- This service needs to be online always
+- In the case of a TaxiApp, it should be available at all times, providing the user with information like Price and Trip Duration
 ```mermaid
 graph LR
     classDef sub opacity:0
