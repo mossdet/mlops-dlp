@@ -1,4 +1,3 @@
-# Deployment
 
 ## 📚 Table of Contents
 - [1. Batch Processing](#1-batch-processing)
@@ -19,7 +18,7 @@
   - [4.9 Data Versioning and Management](#49-data-versioning-and-management)
 - [5. Further Reading](#7-further-reading)
 
-
+# Deployment
 ```mermaid
 graph TD
     Deployment[Deployment]--> |Runs Periodically| Batch[Batch Offline]
