@@ -76,8 +76,8 @@ graph LR
     Backend--> Events[/Pushed Events/]
     Events --> Consumer1[Consumer1🤖] & Consumer2[Consumer2🤖] & Consumer3[Consumer3🤖]
 
-    subgraph noteBackend [""]
-        Backend <--> note["Initial Duration Prediction"]
+    subgraph noteB [" "]
+        Backend--> note["Initial Duration Prediction"]
     end
 ```
 
