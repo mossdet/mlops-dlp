@@ -26,7 +26,7 @@ graph TD
 ```mermaid
 graph LR
     User[👩User]--> |Request Taxi Service| Backend[Backend]
-    Backend--> |Request| RideDurationService[Ride Duration Service <br> (Model)]
+    Backend--> |Request| RideDurationService[Ride Duration Service \n (Model)]
     RideDurationService-->WebService[Webservice]
     RideDurationService-->Streaming[Streaming]
 ```
