@@ -40,7 +40,12 @@ graph LR
     end
 ```
 
-
 ### 2.2 Streaming
-
+```mermaid
+graph LR
+    Producer[🤖Producer]--> |Request| Consumer1[Consumer1🤖]
+    Producer[🤖Producer]--> |Request| Consumer1[Consumer2🤖]
+    Producer[🤖Producer]--> |Request| Consumer1[Consumer3🤖]
+    Producer[🤖Producer]--> |Request| Consumer1[Consumer4🤖]
+```
 
