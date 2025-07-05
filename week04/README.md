@@ -23,8 +23,8 @@ graph TD
 ## 2. Online Prcoessing
 ### 2.1 Web Service
 ```mermaid
-graph TD
-    User[User]--> |Request Taxi Service| Backend[Backend]
+graph LR
+    User[👩User]--> |Request Taxi Service| Backend[Backend]
     Backend--> |Request| RideDurationService[RideDurationService]
     RideDurationService-->WebService[Webservice]
     RideDurationService-->Streaming[Streaming]
