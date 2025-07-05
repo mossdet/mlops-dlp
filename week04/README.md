@@ -218,6 +218,5 @@ graph LR
 
 
 ## 5. Further Reading
-- [MLOps: Model Deployment](https://ml-ops.org/en/latest/model_deployment/)
-- [MLOps: Model Monitoring](https://ml-ops.org/en/latest/model_monitoring/)
-- [MLOps: Model Management](https://ml-ops.org/en/latest/model_management/)
+- [MLOps: End-to-End Machine Learning Workflow](https://ml-ops.org/content/end-to-end-ml-workflow#model-deployment)
+- [MLOps: MLOps Principles](https://ml-ops.org/content/mlops-principles)
