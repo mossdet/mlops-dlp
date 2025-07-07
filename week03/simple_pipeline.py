@@ -35,9 +35,9 @@ class MLPipeline:
         
     def setup_mlflow(self):
         """Setup MLflow tracking"""
-        mlflow_db_path = self.config['mlflow']['db_path']
-        tracking_uri = f"sqlite:///{mlflow_db_path}"
-        
+        tracking_server_host = self.config['mlflow']['tracking_server_host']
+        tracking_uri = f"http://{tracking_server_host}:5000"
+
         mlflow.set_tracking_uri(tracking_uri)
         mlflow.set_experiment(self.config['mlflow']['experiment_name'])
         logger.info(f"MLflow tracking URI set to: {tracking_uri}")
@@ -214,19 +214,25 @@ class MLPipeline:
 
 def main():
     """Main execution function"""
+
+    os.environ["AWS_PROFILE"] = "mlops_zc" # fill in with your AWS profile. (generate with command: aws configure --profile mlops_zc)
+    TRACKING_SERVER_HOST = "ec2-18-223-115-201.us-east-2.compute.amazonaws.com" # fill in with the public DNS of the EC2 instance
     
     # Pipeline configuration
     config = {
         'mlflow': {
-            'db_path': '/home/ubuntu/mlops-dlp/mlflow/mlflow.db',
-            'experiment_name': 'orchestration-pipeline-simple'
+            'tracking_server_host': TRACKING_SERVER_HOST,
+            'experiment_name': 'nyc-taxi-orchestration-pipeline-simple'
         },
         'model': {
             'params': {
-                'max_depth': 6,
-                'learning_rate': 0.1,
-                'n_estimators': 100,
-                'random_state': 42
+                'learning_rate': 0.09585355369315604,
+                'max_depth': 30,
+                'min_child_weight': 1.060597050922164,
+                'objective': 'reg:squarederror',
+                'reg_alpha': 0.018060244040060163,
+                'reg_lambda': 0.011658731377413597,
+                'seed': 42
             }
         },
         'artifacts': {

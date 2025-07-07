@@ -15,22 +15,20 @@ from pathlib import Path
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import root_mean_squared_error
 
-# Set the MLflow tracking URI
-mlflow_df_path = "/home/ubuntu/mlops-dlp/mlflow/mlflow.db"
-MLFLOW_TRACKING_URI = f"sqlite:///{mlflow_df_path}"
+# Set up environment variables for AWS credentials and MLflow tracking server running on an EC2 instance
+# The public DNS of the EC2 instance must be updated after restarting the instance
+os.environ["AWS_PROFILE"] = "mlops_zc" # fill in with your AWS profile. (generate with command: aws configure --profile mlops_zc)
+TRACKING_SERVER_HOST = "ec2-18-223-115-201.us-east-2.compute.amazonaws.com" # fill in with the public DNS of the EC2 instance
 mlflow_experiment_name = "nyc-taxi-experiment"
-models_dir=Path('/home/ubuntu/mlops-dlp/mlflow/models/')
-images_dir=Path('/home/ubuntu/mlops-dlp/mlflow/images/')
 
-
-mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+# Set the MLflow tracking URI
+mlflow.set_tracking_uri(f"http://{TRACKING_SERVER_HOST}:5000")
 mlflow.set_experiment(mlflow_experiment_name)
+
+models_dir=Path('/home/ubuntu/mlops-dlp/week03/mlflow/models/')
+images_dir=Path('/home/ubuntu/mlops-dlp/week03/mlflow/images/')
 models_dir.mkdir(parents=True, exist_ok=True)
 images_dir.mkdir(parents=True, exist_ok=True)
-
-# mlflow.set_tracking_uri("http://localhost:5000")
-# mlflow.set_experiment("nyc-taxi-experiment")
-
 
 
 def read_dataframe(year, month):

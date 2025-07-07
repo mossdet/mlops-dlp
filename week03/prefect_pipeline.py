@@ -4,10 +4,24 @@ Prefect Workflow Example for ML Pipeline Orchestration
 
 This script demonstrates how to create a Prefect workflow for orchestrating
 ML pipelines with better error handling, retries, and observability.
-"""
 
+CORRECTED TO ALIGN WITH REFERENCE SCRIPT (duration-prediction.py):
+- Feature engineering uses only PU_DO as categorical feature (not separate PULocationID/DOLocationID)
+- DictVectorizer configured with sparse=True to match reference
+- Validation uses next month's data (like train/val split in reference)
+- Uses XGBoost's DMatrix and native training API (not XGBRegressor)
+- MLflow logging structure matches reference script
+- Model parameters match the reference script's best_params
+- Saves preprocessor and logs artifacts like reference
+- Adds command-line argument support
+- Saves run_id to file as in reference
+- Uses year=2021, month=1 as default for testing
+"""
+import time
 import pickle
 import logging
+import os
+import argparse
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any
@@ -21,7 +35,6 @@ from sklearn.metrics import root_mean_squared_error
 # Prefect imports (would be available in a Prefect environment)
 try:
     from prefect import flow, task, get_run_logger
-    from prefect.task_runners import SequentialTaskRunner
     PREFECT_AVAILABLE = True
 except ImportError:
     PREFECT_AVAILABLE = False
@@ -40,20 +53,26 @@ except ImportError:
 # Configuration
 CONFIG = {
     'mlflow': {
-        'db_path': '/home/ubuntu/mlops-dlp/mlflow/mlflow.db',
+        'tracking_server_host': "ec2-18-223-115-201.us-east-2.compute.amazonaws.com",  # fill in with the public DNS of the EC2 instance
+        'aws_profile': 'mlops_zc',  # fill in with your AWS profile (generate with command: aws configure --profile mlops_zc)
         'experiment_name': 'orchestration-pipeline-prefect'
     },
     'data': {
-        'year': 2023,
+        'year': 2021,
         'month': 1
     },
     'model': {
         'params': {
-            'max_depth': 6,
-            'learning_rate': 0.1,
-            'n_estimators': 100,
-            'random_state': 42
-        }
+            'learning_rate': 0.09585355369315604,
+            'max_depth': 30,
+            'min_child_weight': 1.060597050922164,
+            'objective': 'reg:squarederror',
+            'reg_alpha': 0.018060244040060163,
+            'reg_lambda': 0.011658731377413597,
+            'seed': 42
+        },
+        'num_boost_round': 30,
+        'early_stopping_rounds': 50
     },
     'artifacts': {
         'models_dir': '/home/ubuntu/mlops-dlp/mlflow/models',
@@ -66,8 +85,9 @@ def setup_mlflow_task():
     """Setup MLflow tracking"""
     logger = get_run_logger()
     
-    mlflow_db_path = CONFIG['mlflow']['db_path']
-    tracking_uri = f"sqlite:///{mlflow_db_path}"
+    os.environ["AWS_PROFILE"] = CONFIG['mlflow']['aws_profile']
+    tracking_server_host = CONFIG['mlflow']['tracking_server_host']
+    tracking_uri = f"http://{tracking_server_host}:5000"
     
     mlflow.set_tracking_uri(tracking_uri)
     mlflow.set_experiment(CONFIG['mlflow']['experiment_name'])
@@ -111,8 +131,129 @@ def extract_data_task(year: int, month: int) -> str:
         logger.error(f"Failed to extract data: {e}")
         raise
 
+@task(retries=2, retry_delay_seconds=60)
+def extract_validation_data_task(year: int, month: int) -> str:
+    """
+    Extract validation data from next month
+    
+    Args:
+        year: Year of the training data
+        month: Month of the training data
+        
+    Returns:
+        Path to saved validation data file
+    """
+    logger = get_run_logger()
+    
+    # Calculate next month for validation
+    next_year = year if month < 12 else year + 1
+    next_month = month + 1 if month < 12 else 1
+    
+    logger.info(f"Extracting validation data for {next_year}-{next_month:02d}")
+    
+    url = f'https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_{next_year}-{next_month:02d}.parquet'
+    
+    try:
+        df = pd.read_parquet(url)
+        
+        # Save raw validation data
+        data_dir = Path(CONFIG['artifacts']['data_dir'])
+        data_dir.mkdir(parents=True, exist_ok=True)
+        
+        raw_val_data_path = data_dir / f"raw_val_data_{next_year}_{next_month:02d}.parquet"
+        df.to_parquet(raw_val_data_path)
+        
+        logger.info(f"Successfully extracted {len(df)} validation records to {raw_val_data_path}")
+        
+        return str(raw_val_data_path)
+        
+    except Exception as e:
+        logger.error(f"Failed to extract validation data: {e}")
+        raise
+
+@task
+def transform_validation_data_task(raw_val_data_path: str, year: int, month: int) -> str:
+    """
+    Transform and clean validation data
+    
+    Args:
+        raw_val_data_path: Path to raw validation data file
+        year: Training year for naming
+        month: Training month for naming
+        
+    Returns:
+        Path to processed validation data file
+    """
+    logger = get_run_logger()
+    
+    logger.info(f"Transforming validation data from {raw_val_data_path}")
+    
+    # Load raw validation data
+    df = pd.read_parquet(raw_val_data_path)
+    original_size = len(df)
+    
+    # Calculate duration
+    df['duration'] = df.lpep_dropoff_datetime - df.lpep_pickup_datetime
+    df.duration = df.duration.apply(lambda td: td.total_seconds() / 60)
+    
+    # Filter outliers
+    df = df[(df.duration >= 1) & (df.duration <= 60)]
+    filtered_size = len(df)
+    
+    # Feature engineering
+    categorical = ['PULocationID', 'DOLocationID']
+    df[categorical] = df[categorical].astype(str)
+    df['PU_DO'] = df['PULocationID'] + '_' + df['DOLocationID']
+    
+    # Save processed validation data
+    data_dir = Path(CONFIG['artifacts']['data_dir'])
+    processed_val_data_path = data_dir / f"processed_val_data_{year}_{month:02d}.parquet"
+    df.to_parquet(processed_val_data_path)
+    
+    logger.info(f"Validation data transformed. Original: {original_size}, Filtered: {filtered_size} ({filtered_size/original_size:.1%})")
+    logger.info(f"Processed validation data saved to {processed_val_data_path}")
+    
+    return str(processed_val_data_path)
+
 @task
 def validate_data_task(raw_data_path: str) -> bool:
+    """
+    Validate extracted data quality
+    
+    Args:
+        raw_data_path: Path to raw data file
+        
+    Returns:
+        True if data passes validation
+    """
+    logger = get_run_logger()
+    
+    logger.info(f"Validating data from {raw_data_path}")
+    
+    df = pd.read_parquet(raw_data_path)
+    
+    # Data quality checks
+    checks = {
+        'non_empty': len(df) > 0,
+        'has_required_columns': all(col in df.columns for col in 
+                                  ['lpep_pickup_datetime', 'lpep_dropoff_datetime', 
+                                   'PULocationID', 'DOLocationID', 'trip_distance']),
+        'no_all_null_rows': not df.isnull().all(axis=1).any(),
+        'reasonable_size': 1000 <= len(df) <= 10000000  # Between 1K and 10M records
+    }
+    
+    passed_checks = sum(checks.values())
+    total_checks = len(checks)
+    
+    logger.info(f"Data validation: {passed_checks}/{total_checks} checks passed")
+    
+    for check_name, result in checks.items():
+        logger.info(f"  {check_name}: {'✅' if result else '❌'}")
+    
+    if passed_checks != total_checks:
+        raise ValueError(f"Data validation failed: {passed_checks}/{total_checks} checks passed")
+    
+    return True
     """
     Validate extracted data quality
     
@@ -194,62 +335,83 @@ def transform_data_task(raw_data_path: str) -> str:
     return str(processed_data_path)
 
 @task
-def prepare_features_task(processed_data_path: str) -> Dict[str, str]:
+def prepare_features_task(train_data_path: str, val_data_path: str) -> Dict[str, str]:
     """
-    Prepare features for training
+    Prepare features for training and validation
     
     Args:
-        processed_data_path: Path to processed data file
+        train_data_path: Path to training data file
+        val_data_path: Path to validation data file
         
     Returns:
         Dictionary of file paths for features, targets, and vectorizer
     """
     logger = get_run_logger()
     
-    logger.info(f"Preparing features from {processed_data_path}")
+    logger.info(f"Preparing features from {train_data_path} and {val_data_path}")
     
     # Load processed data
-    df = pd.read_parquet(processed_data_path)
+    df_train = pd.read_parquet(train_data_path)
+    df_val = pd.read_parquet(val_data_path)
     
-    categorical = ['PULocationID', 'DOLocationID', 'PU_DO']
+    # Use only PU_DO as categorical feature (not separate PULocationID and DOLocationID)
+    categorical = ['PU_DO']
     numerical = ['trip_distance']
     
-    dv = DictVectorizer()
+    # Create DictVectorizer with sparse=True to match reference script
+    dv = DictVectorizer(sparse=True)
     
-    train_dicts = df[categorical + numerical].to_dict(orient='records')
+    # Prepare training features
+    train_dicts = df_train[categorical + numerical].to_dict(orient='records')
     X_train = dv.fit_transform(train_dicts)
-    y_train = df.duration.values
+    y_train = df_train.duration.values
+    
+    # Prepare validation features using the same vectorizer
+    val_dicts = df_val[categorical + numerical].to_dict(orient='records')
+    X_val = dv.transform(val_dicts)
+    y_val = df_val.duration.values
     
     # Save features and vectorizer
     data_dir = Path(CONFIG['artifacts']['data_dir'])
     
-    features_path = data_dir / f"features_{CONFIG['data']['year']}_{CONFIG['data']['month']:02d}.pkl"
-    targets_path = data_dir / f"targets_{CONFIG['data']['year']}_{CONFIG['data']['month']:02d}.pkl"
+    features_train_path = data_dir / f"features_train_{CONFIG['data']['year']}_{CONFIG['data']['month']:02d}.pkl"
+    targets_train_path = data_dir / f"targets_train_{CONFIG['data']['year']}_{CONFIG['data']['month']:02d}.pkl"
+    features_val_path = data_dir / f"features_val_{CONFIG['data']['year']}_{CONFIG['data']['month']:02d}.pkl"
+    targets_val_path = data_dir / f"targets_val_{CONFIG['data']['year']}_{CONFIG['data']['month']:02d}.pkl"
     vectorizer_path = data_dir / f"vectorizer_{CONFIG['data']['year']}_{CONFIG['data']['month']:02d}.pkl"
     
     # Save using pickle
-    with open(features_path, 'wb') as f:
+    with open(features_train_path, 'wb') as f:
         pickle.dump(X_train, f)
     
-    with open(targets_path, 'wb') as f:
+    with open(targets_train_path, 'wb') as f:
         pickle.dump(y_train, f)
+    
+    with open(features_val_path, 'wb') as f:
+        pickle.dump(X_val, f)
+    
+    with open(targets_val_path, 'wb') as f:
+        pickle.dump(y_val, f)
         
     with open(vectorizer_path, 'wb') as f:
         pickle.dump(dv, f)
     
-    logger.info(f"Features prepared. Shape: {X_train.shape}")
+    logger.info(f"Training features shape: {X_train.shape}")
+    logger.info(f"Validation features shape: {X_val.shape}")
     logger.info(f"Feature density: {X_train.nnz / (X_train.shape[0] * X_train.shape[1]):.3f}")
     
     return {
-        'features_path': str(features_path),
-        'targets_path': str(targets_path),
+        'features_train_path': str(features_train_path),
+        'targets_train_path': str(targets_train_path),
+        'features_val_path': str(features_val_path),
+        'targets_val_path': str(targets_val_path),
         'vectorizer_path': str(vectorizer_path)
     }
 
 @task
 def train_model_task(feature_paths: Dict[str, str], tracking_uri: str) -> Dict[str, Any]:
     """
-    Train ML model with MLflow tracking
+    Train ML model with MLflow tracking using XGBoost native API
     
     Args:
         feature_paths: Dictionary of file paths
@@ -263,52 +425,75 @@ def train_model_task(feature_paths: Dict[str, str], tracking_uri: str) -> Dict[s
     logger.info("Training model")
     
     # Load features and targets
-    with open(feature_paths['features_path'], 'rb') as f:
+    with open(feature_paths['features_train_path'], 'rb') as f:
         X_train = pickle.load(f)
     
-    with open(feature_paths['targets_path'], 'rb') as f:
+    with open(feature_paths['targets_train_path'], 'rb') as f:
         y_train = pickle.load(f)
     
-    with mlflow.start_run():
-        # Model parameters
-        params = CONFIG['model']['params']
+    with open(feature_paths['features_val_path'], 'rb') as f:
+        X_val = pickle.load(f)
+    
+    with open(feature_paths['targets_val_path'], 'rb') as f:
+        y_val = pickle.load(f)
+    
+    with open(feature_paths['vectorizer_path'], 'rb') as f:
+        dv = pickle.load(f)
+    
+    with mlflow.start_run() as run:
+
+        start_time = time.time()
+        # Create DMatrix objects for XGBoost native API
+        train = xgb.DMatrix(X_train, label=y_train)
+        valid = xgb.DMatrix(X_val, label=y_val)
         
-        # Train model
-        model = xgb.XGBRegressor(**params)
-        model.fit(X_train, y_train)
+        # Model parameters (matching reference script)
+        best_params = CONFIG['model']['params']
         
-        # Make predictions
-        y_pred = model.predict(X_train)
-        rmse = root_mean_squared_error(y_train, y_pred)
+        # Log parameters
+        mlflow.log_params(best_params)
         
-        # Additional metrics
-        mean_duration = y_train.mean()
-        std_duration = y_train.std()
+        # Train model using XGBoost native API
+        booster = xgb.train(
+            params=best_params,
+            dtrain=train,
+            num_boost_round=CONFIG['model']['num_boost_round'],
+            evals=[(valid, 'validation')],
+            early_stopping_rounds=CONFIG['model']['early_stopping_rounds']
+        )
         
-        # Log to MLflow
-        mlflow.log_params(params)
-        mlflow.log_metrics({
-            "rmse": rmse,
-            "mean_duration": mean_duration,
-            "std_duration": std_duration,
-            "relative_rmse": rmse / mean_duration
-        })
-        mlflow.xgboost.log_model(model, "model")
+        # Make predictions on validation set
+        y_pred = booster.predict(valid)
+        rmse = root_mean_squared_error(y_val, y_pred)
+        
+        # Log metrics
+        mlflow.log_metric("rmse", rmse)
+        
+        # Save preprocessor
+        models_dir = Path('/home/ubuntu/mlops-dlp/week03/mlflow/models/')
+        models_dir.mkdir(parents=True, exist_ok=True)
+        
+        preprocessor_path = models_dir / "preprocessor.b"
+        with open(preprocessor_path, "wb") as f_out:
+            pickle.dump(dv, f_out)
+        mlflow.log_artifact(str(preprocessor_path), artifact_path="preprocessor")
+        
+        # Log model
+        mlflow.xgboost.log_model(booster, artifact_path="models_mlflow")
         
         # Get run ID
-        run_id = mlflow.active_run().info.run_id
+        run_id = run.info.run_id
         
         logger.info(f"Model trained successfully")
         logger.info(f"  RMSE: {rmse:.4f}")
-        logger.info(f"  Mean duration: {mean_duration:.2f} minutes")
-        logger.info(f"  Relative RMSE: {rmse/mean_duration:.3f}")
         logger.info(f"  Run ID: {run_id}")
+
+        duration = time.time() - start_time
         
         return {
             'run_id': run_id,
-            'rmse': rmse,
-            'mean_duration': mean_duration,
-            'relative_rmse': rmse / mean_duration,
+            'rmse': rmse,            
+            'booster': booster,
             'vectorizer_path': feature_paths['vectorizer_path']
         }
 
@@ -328,16 +513,14 @@ def validate_model_task(training_results: Dict[str, Any]) -> bool:
     logger.info("Validating model quality")
     
     rmse = training_results['rmse']
-    relative_rmse = training_results['relative_rmse']
     
     # Quality thresholds
     max_rmse = 10.0  # Maximum acceptable RMSE
-    max_relative_rmse = 0.5  # Maximum relative RMSE (50% of mean)
+    min_rmse = 0.1   # Minimum reasonable RMSE (should not be suspiciously low)
     
     checks = {
         'rmse_threshold': rmse <= max_rmse,
-        'relative_rmse_threshold': relative_rmse <= max_relative_rmse,
-        'reasonable_rmse': rmse > 0.1  # Should be reasonable but not suspiciously low
+        'reasonable_rmse': rmse >= min_rmse
     }
     
     passed_checks = sum(checks.values())
@@ -383,8 +566,6 @@ def save_model_artifacts_task(training_results: Dict[str, Any]) -> Dict[str, Any
     metadata = {
         'run_id': training_results['run_id'],
         'rmse': training_results['rmse'],
-        'mean_duration': training_results['mean_duration'],
-        'relative_rmse': training_results['relative_rmse'],
         'timestamp': datetime.now().isoformat(),
         'vectorizer_path': str(dst_vectorizer),
         'model_config': CONFIG['model']
@@ -408,7 +589,8 @@ def cleanup_task():
     data_dir = Path(CONFIG['artifacts']['data_dir'])
     
     # Remove temporary data files
-    cleanup_patterns = ['raw_data_*.parquet', 'processed_data_*.parquet', 
+    cleanup_patterns = ['raw_data_*.parquet', 'raw_val_data_*.parquet', 
+                       'processed_data_*.parquet', 'processed_val_data_*.parquet',
                        'features_*.pkl', 'targets_*.pkl', 'vectorizer_*.pkl']
     
     cleaned_files = 0
@@ -420,9 +602,8 @@ def cleanup_task():
     
     logger.info(f"Cleaned up {cleaned_files} temporary files")
 
-@flow(name="ML Pipeline with Prefect", 
-      task_runner=SequentialTaskRunner() if PREFECT_AVAILABLE else None)
-def ml_pipeline_flow(year: int = 2023, month: int = 1):
+@flow(name="ML Pipeline with Prefect")
+def ml_pipeline_flow(year: int = 2021, month: int = 1, tracking_server_host: str = "ec2-18-223-115-201.us-east-2.compute.amazonaws.com", aws_profile: str = "mlops_zc"):
     """
     Main ML pipeline flow
     
@@ -435,6 +616,10 @@ def ml_pipeline_flow(year: int = 2023, month: int = 1):
     logger.info(f"Starting ML pipeline for {year}-{month:02d}")
     
     # Update config with parameters
+
+    CONFIG['mlflow']['tracking_server_host'] = tracking_server_host
+    CONFIG['mlflow']['aws_profile'] = aws_profile
+
     CONFIG['data']['year'] = year
     CONFIG['data']['month'] = month
     
@@ -443,13 +628,16 @@ def ml_pipeline_flow(year: int = 2023, month: int = 1):
     
     # Data pipeline
     raw_data_path = extract_data_task(year, month)
+    raw_val_data_path = extract_validation_data_task(year, month)
+    
     data_valid = validate_data_task(raw_data_path)
     
     if not data_valid:
         raise ValueError("Data validation failed")
     
     processed_data_path = transform_data_task(raw_data_path)
-    feature_paths = prepare_features_task(processed_data_path)
+    processed_val_data_path = transform_validation_data_task(raw_val_data_path, year, month)
+    feature_paths = prepare_features_task(processed_data_path, processed_val_data_path)
     
     # Model pipeline
     training_results = train_model_task(feature_paths, tracking_uri)
@@ -460,6 +648,7 @@ def ml_pipeline_flow(year: int = 2023, month: int = 1):
     
     # Artifact management
     metadata = save_model_artifacts_task(training_results)
+    run_id_path = save_run_id_task(training_results['run_id'])
     cleanup_task()
     
     logger.info("Pipeline completed successfully")
@@ -475,13 +664,28 @@ def ml_pipeline_flow(year: int = 2023, month: int = 1):
         'metadata': metadata
     }
 
+@task
+def save_run_id_task(run_id: str):
+    """Save run ID to file like in reference script"""
+    logger = get_run_logger()
+    
+    run_id_fpath = Path(os.path.dirname(os.path.abspath(__file__))) / "run_id.txt"
+    run_id_fpath.parent.mkdir(parents=True, exist_ok=True)
+    
+    with open(run_id_fpath, "w") as f:
+        f.write(run_id)
+    
+    logger.info(f"Run ID saved to {run_id_fpath}")
+    
+    return str(run_id_fpath)
+
 # Standalone execution
 def run_standalone():
     """Run the pipeline standalone for testing"""
     print("Running Prefect pipeline standalone...")
     
     try:
-        result = ml_pipeline_flow(year=2023, month=1)
+        result = ml_pipeline_flow(year=2021, month=1)
         
         print(f"\n🎉 Pipeline completed successfully!")
         print(f"   Run ID: {result['run_id']}")
@@ -495,6 +699,11 @@ def run_standalone():
         raise
 
 if __name__ == "__main__":
+    import argparse
+    
+    # Set to False for actual runs, True for testing purposes
+    testing = False
+    
     if PREFECT_AVAILABLE:
         print("Prefect is available. You can:")
         print("1. Run standalone: python prefect_pipeline.py")
@@ -503,4 +712,22 @@ if __name__ == "__main__":
         print("Prefect not installed. Running standalone version...")
         print("To install Prefect: pip install prefect")
     
-    run_standalone()
+    default_tracking_server_host = "ec2-18-223-115-201.us-east-2.compute.amazonaws.com" # fill in with the public DNS of the EC2 instance
+    default_aws_profile = "mlops_zc" # fill in with your AWS profile (generate with command: aws configure --profile mlops_zc)
+    if testing:
+        # Use fixed year and month for testing
+        year = 2021
+        month = 1
+        result = ml_pipeline_flow(year=year, month=month, tracking_server_host=default_tracking_server_host, aws_profile=default_aws_profile)
+        print(f"MLflow run_id: {result['run_id']}")
+    else:
+        # Use command line arguments for production
+        parser = argparse.ArgumentParser(description='Train a model to predict taxi trip duration.')
+        parser.add_argument('--year', type=int, required=True, help='Year of the data to train on')
+        parser.add_argument('--month', type=int, required=True, help='Month of the data to train on')
+        parser.add_argument('--tracking-server-host', type=str, required=True, default=default_tracking_server_host, help='Tracking server hostname (default: ec2-18-223-115-201.us-east-2.compute.amazonaws.com)')
+        parser.add_argument('--aws-profile', type=str, required=True, default=default_aws_profile, help='AWS profile name (default: mlops_zc)')
+        args = parser.parse_args()
+
+        result = ml_pipeline_flow(year=args.year, month=args.month, tracking_server_host=args.tracking_server_host, aws_profile=args.aws_profile)
+        print(f"MLflow run_id: {result['run_id']}")

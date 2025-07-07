@@ -102,7 +102,7 @@ Modern workflow orchestration with Prefect 2.0.
 pip install prefect
 
 # Run standalone
-python prefect_pipeline.py
+python prefect_pipeline.py --year=2021 --month=1 --tracking-server-host=ec2-18-223-115-201.us-east-2.compute.amazonaws.com --aws-profile=mlops_zc
 
 # Or deploy to Prefect server
 # prefect deployment build-from-flow prefect_pipeline.py:ml_pipeline_flow
