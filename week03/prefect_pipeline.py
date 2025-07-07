@@ -20,6 +20,9 @@ import mlflow
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import root_mean_squared_error
 
+# Import centralized configuration
+from config import get_config
+
 # Prefect imports (would be available in a Prefect environment)
 try:
     from prefect import flow, task, get_run_logger
@@ -38,35 +41,8 @@ except ImportError:
     def get_run_logger():
         return logging.getLogger(__name__)
 
-# Configuration
-CONFIG = {
-    'mlflow': {
-        'tracking_server_host': "ec2-18-223-115-201.us-east-2.compute.amazonaws.com",  # fill in with the public DNS of the EC2 instance
-        'aws_profile': 'mlops_zc',  # fill in with your AWS profile (generate with command: aws configure --profile mlops_zc)
-        'experiment_name': 'orchestration-pipeline-prefect'
-    },
-    'data': {
-        'year': 2021,
-        'month': 1
-    },
-    'model': {
-        'params': {
-            'learning_rate': 0.09585355369315604,
-            'max_depth': 30,
-            'min_child_weight': 1.060597050922164,
-            'objective': 'reg:squarederror',
-            'reg_alpha': 0.018060244040060163,
-            'reg_lambda': 0.011658731377413597,
-            'seed': 42
-        },
-        'num_boost_round': 30,
-        'early_stopping_rounds': 50
-    },
-    'artifacts': {
-        'models_dir': '/home/ubuntu/mlops-dlp/mlflow/models',
-        'data_dir': '/home/ubuntu/mlops-dlp/data'
-    }
-}
+# Load centralized configuration
+CONFIG = get_config().get_script_config('prefect')
 
 @task(retries=3, retry_delay_seconds=30)
 def setup_mlflow_task():
@@ -591,32 +567,47 @@ def cleanup_task():
     logger.info(f"Cleaned up {cleaned_files} temporary files")
 
 @flow(name="ML Pipeline with Prefect")
-def ml_pipeline_flow(year: int = 2021, month: int = 1, tracking_server_host: str = "ec2-18-223-115-201.us-east-2.compute.amazonaws.com", aws_profile: str = "mlops_zc"):
+def ml_pipeline_flow(year: int = None, month: int = None, tracking_server_host: str = None, aws_profile: str = None):
     """
     Main ML pipeline flow
     
     Args:
-        year: Year of the data to process
-        month: Month of the data to process
+        year: Year of the data to process (overrides config)
+        month: Month of the data to process (overrides config)
+        tracking_server_host: MLflow tracking server host (overrides config)
+        aws_profile: AWS profile (overrides config)
     """
     logger = get_run_logger()
     
-    logger.info(f"Starting ML pipeline for {year}-{month:02d}")
+    # Get configuration manager and update if parameters provided
+    config_manager = get_config()
     
-    # Update config with parameters
-
-    CONFIG['mlflow']['tracking_server_host'] = tracking_server_host
-    CONFIG['mlflow']['aws_profile'] = aws_profile
-
-    CONFIG['data']['year'] = year
-    CONFIG['data']['month'] = month
+    if tracking_server_host or aws_profile:
+        config_manager.update_mlflow_settings(
+            tracking_server_host=tracking_server_host,
+            aws_profile=aws_profile
+        )
+    
+    if year or month:
+        config_manager.update_data_settings(year=year, month=month)
+    
+    # Get updated configuration
+    global CONFIG
+    CONFIG = config_manager.get_script_config('prefect')
+    
+    actual_year = CONFIG['data']['year']
+    actual_month = CONFIG['data']['month']
+    
+    logger.info(f"Starting ML pipeline for {actual_year}-{actual_month:02d}")
+    logger.info(f"Using MLflow server: {CONFIG['mlflow']['tracking_server_host']}")
+    logger.info(f"Using AWS profile: {CONFIG['mlflow']['aws_profile']}")
     
     # Setup
     tracking_uri = setup_mlflow_task()
     
     # Data pipeline
-    raw_data_path = extract_data_task(year, month)
-    raw_val_data_path = extract_validation_data_task(year, month)
+    raw_data_path = extract_data_task(actual_year, actual_month)
+    raw_val_data_path = extract_validation_data_task(actual_year, actual_month)
     
     data_valid = validate_data_task(raw_data_path)
     
@@ -624,7 +615,7 @@ def ml_pipeline_flow(year: int = 2021, month: int = 1, tracking_server_host: str
         raise ValueError("Data validation failed")
     
     processed_data_path = transform_data_task(raw_data_path)
-    processed_val_data_path = transform_validation_data_task(raw_val_data_path, year, month)
+    processed_val_data_path = transform_validation_data_task(raw_val_data_path, actual_year, actual_month)
     feature_paths = prepare_features_task(processed_data_path, processed_val_data_path)
     
     # Model pipeline
@@ -700,22 +691,23 @@ if __name__ == "__main__":
         print("Prefect not installed. Running standalone version...")
         print("To install Prefect: pip install prefect")
     
-    default_tracking_server_host = "ec2-18-223-115-201.us-east-2.compute.amazonaws.com" # fill in with the public DNS of the EC2 instance
-    default_aws_profile = "mlops_zc" # fill in with your AWS profile (generate with command: aws configure --profile mlops_zc)
     if testing:
-        # Use fixed year and month for testing
-        year = 2021
-        month = 1
-        result = ml_pipeline_flow(year=year, month=month, tracking_server_host=default_tracking_server_host, aws_profile=default_aws_profile)
+        # Use configuration defaults for testing
+        result = ml_pipeline_flow()
         print(f"MLflow run_id: {result['run_id']}")
     else:
         # Use command line arguments for production
         parser = argparse.ArgumentParser(description='Train a model to predict taxi trip duration.')
-        parser.add_argument('--year', type=int, required=True, help='Year of the data to train on')
-        parser.add_argument('--month', type=int, required=True, help='Month of the data to train on')
-        parser.add_argument('--tracking-server-host', type=str, required=True, default=default_tracking_server_host, help='Tracking server hostname (default: ec2-18-223-115-201.us-east-2.compute.amazonaws.com)')
-        parser.add_argument('--aws-profile', type=str, required=True, default=default_aws_profile, help='AWS profile name (default: mlops_zc)')
+        parser.add_argument('--year', type=int, help='Year of the data to train on (overrides config)')
+        parser.add_argument('--month', type=int, help='Month of the data to train on (overrides config)')
+        parser.add_argument('--tracking-server-host', type=str, help='Tracking server hostname (overrides config)')
+        parser.add_argument('--aws-profile', type=str, help='AWS profile name (overrides config)')
         args = parser.parse_args()
 
-        result = ml_pipeline_flow(year=args.year, month=args.month, tracking_server_host=args.tracking_server_host, aws_profile=args.aws_profile)
+        result = ml_pipeline_flow(
+            year=args.year, 
+            month=args.month, 
+            tracking_server_host=args.tracking_server_host, 
+            aws_profile=args.aws_profile
+        )
         print(f"MLflow run_id: {result['run_id']}")

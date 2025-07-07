@@ -23,6 +23,9 @@ import mlflow
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import root_mean_squared_error
 
+# Import centralized configuration
+from config import get_config
+
 class TaskRunner:
     """Simple task runner with dependency management"""
     
@@ -164,49 +167,29 @@ class TaskRunner:
             shutil.rmtree(self.cache_dir)
         print("Cache cleaned")
 
-# Global configuration
-CONFIG = {
-    'mlflow': {
-        'tracking_server_host': 'ec2-18-223-115-201.us-east-2.compute.amazonaws.com',  # EC2 MLflow server
-        'aws_profile': 'mlops_zc',  # AWS profile for authentication
-        'experiment_name': 'nyc-taxi-experiment'  # Match reference script
-    },
-    'data': {
-        'year': 2021,  # Updated default to match reference script
-        'month': 1,
-        'url_template': 'https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_{year}-{month:02d}.parquet'
-    },
-    'model': {
-        'params': {
-            # Optimized hyperparameters from reference script
-            'learning_rate': 0.09585355369315604,
-            'max_depth': 30,
-            'min_child_weight': 1.060597050922164,
-            'objective': 'reg:squarederror',
-            'reg_alpha': 0.018060244040060163,
-            'reg_lambda': 0.011658731377413597,
-            'seed': 42
-        },
-        'num_boost_round': 30,
-        'early_stopping_rounds': 50
-    },
-    'paths': {
-        'data_dir': '/home/ubuntu/mlops-dlp/data',
-        'models_dir': '/home/ubuntu/mlops-dlp/week03/mlflow/models',
-        'train_data': '/home/ubuntu/mlops-dlp/data/train_data.parquet',
-        'val_data': '/home/ubuntu/mlops-dlp/data/val_data.parquet',
-        'features_train': '/home/ubuntu/mlops-dlp/data/features_train.pkl',
-        'features_val': '/home/ubuntu/mlops-dlp/data/features_val.pkl',
-        'targets_train': '/home/ubuntu/mlops-dlp/data/targets_train.pkl',
-        'targets_val': '/home/ubuntu/mlops-dlp/data/targets_val.pkl',
-        'vectorizer': '/home/ubuntu/mlops-dlp/data/vectorizer.pkl',
-        'model_metadata': '/home/ubuntu/mlops-dlp/week03/mlflow/models/latest_metadata.json',
-        'run_id_file': '/home/ubuntu/mlops-dlp/week03/run_id.txt'
-    },
-    'cache_dir': '/home/ubuntu/mlops-dlp/.cache'
-}
+# Load centralized configuration
+CONFIG = get_config().get_script_config('make')
 
-# Create task runner
+# Ensure CONFIG has required paths for make pipeline
+if 'paths' not in CONFIG:
+    CONFIG['paths'] = {
+        'data_dir': CONFIG['artifacts']['data_dir'],
+        'models_dir': CONFIG['artifacts']['models_dir'],
+        'train_data': f"{CONFIG['artifacts']['data_dir']}/train_data.parquet",
+        'val_data': f"{CONFIG['artifacts']['data_dir']}/val_data.parquet",
+        'features_train': f"{CONFIG['artifacts']['data_dir']}/features_train.pkl",
+        'features_val': f"{CONFIG['artifacts']['data_dir']}/features_val.pkl",
+        'targets_train': f"{CONFIG['artifacts']['data_dir']}/targets_train.pkl",
+        'targets_val': f"{CONFIG['artifacts']['data_dir']}/targets_val.pkl",
+        'vectorizer': f"{CONFIG['artifacts']['data_dir']}/vectorizer.pkl",
+        'model_metadata': f"{CONFIG['artifacts']['models_dir']}/latest_metadata.json",
+        'run_id_file': '/home/ubuntu/mlops-dlp/week03/run_id.txt'
+    }
+
+if 'cache_dir' not in CONFIG:
+    CONFIG['cache_dir'] = '/home/ubuntu/mlops-dlp/.cache'
+
+# Create task runner (basic config, will be updated in main())
 runner = TaskRunner(CONFIG)
 
 @runner.task('extract', 
@@ -502,21 +485,53 @@ def main():
     parser.add_argument('--list', action='store_true', help='List all tasks')
     parser.add_argument('--clean', action='store_true', help='Clean cache')
     parser.add_argument('--force', action='store_true', help='Force rebuild all tasks')
-    parser.add_argument('--year', type=int, default=2021, help='Data year (default: 2021)')
-    parser.add_argument('--month', type=int, default=1, help='Data month (default: 1)')
-    parser.add_argument('--tracking-server-host', type=str, 
-                       default='ec2-18-223-115-201.us-east-2.compute.amazonaws.com',
-                       help='MLflow tracking server host (default: EC2 instance)')
-    parser.add_argument('--aws-profile', type=str, default='mlops_zc',
-                       help='AWS profile for authentication (default: mlops_zc)')
+    parser.add_argument('--year', type=int, help='Data year (overrides config)')
+    parser.add_argument('--month', type=int, help='Data month (overrides config)')
+    parser.add_argument('--tracking-server-host', type=str,
+                       help='MLflow tracking server host (overrides config)')
+    parser.add_argument('--aws-profile', type=str,
+                       help='AWS profile for authentication (overrides config)')
     
     args = parser.parse_args()
     
-    # Update configuration with CLI arguments
-    CONFIG['data']['year'] = args.year
-    CONFIG['data']['month'] = args.month
-    CONFIG['mlflow']['tracking_server_host'] = args.tracking_server_host
-    CONFIG['mlflow']['aws_profile'] = args.aws_profile
+    # Get configuration manager and update if command line arguments provided
+    config_manager = get_config()
+    
+    if args.tracking_server_host or args.aws_profile:
+        config_manager.update_mlflow_settings(
+            tracking_server_host=args.tracking_server_host,
+            aws_profile=args.aws_profile
+        )
+    
+    if args.year or args.month:
+        config_manager.update_data_settings(year=args.year, month=args.month)
+    
+    # Reload configuration after updates
+    global CONFIG
+    CONFIG = config_manager.get_script_config('make')
+    
+    # Ensure CONFIG has required paths for make pipeline
+    if 'paths' not in CONFIG:
+        CONFIG['paths'] = {
+            'data_dir': CONFIG['artifacts']['data_dir'],
+            'models_dir': CONFIG['artifacts']['models_dir'],
+            'train_data': f"{CONFIG['artifacts']['data_dir']}/train_data.parquet",
+            'val_data': f"{CONFIG['artifacts']['data_dir']}/val_data.parquet",
+            'features_train': f"{CONFIG['artifacts']['data_dir']}/features_train.pkl",
+            'features_val': f"{CONFIG['artifacts']['data_dir']}/features_val.pkl",
+            'targets_train': f"{CONFIG['artifacts']['data_dir']}/targets_train.pkl",
+            'targets_val': f"{CONFIG['artifacts']['data_dir']}/targets_val.pkl",
+            'vectorizer': f"{CONFIG['artifacts']['data_dir']}/vectorizer.pkl",
+            'model_metadata': f"{CONFIG['artifacts']['models_dir']}/latest_metadata.json",
+            'run_id_file': '/home/ubuntu/mlops-dlp/week03/run_id.txt'
+        }
+
+    if 'cache_dir' not in CONFIG:
+        CONFIG['cache_dir'] = '/home/ubuntu/mlops-dlp/.cache'
+    
+    # Update existing runner configuration
+    runner.config = CONFIG
+    runner.setup_mlflow()
     
     if args.list:
         runner.list_tasks()
@@ -529,10 +544,10 @@ def main():
     try:
         # Run the target task
         print(f"🎯 Target: {args.target}")
-        print(f"📅 Data: {args.year}-{args.month:02d}")
+        print(f"📅 Data: {CONFIG['data']['year']}-{CONFIG['data']['month']:02d}")
         print(f"🔄 Force rebuild: {args.force}")
-        print(f"🌐 MLflow Server: {args.tracking_server_host}")
-        print(f"☁️ AWS Profile: {args.aws_profile}")
+        print(f"🌐 MLflow Server: {CONFIG['mlflow']['tracking_server_host']}")
+        print(f"☁️ AWS Profile: {CONFIG['mlflow']['aws_profile']}")
         print("-" * 50)
         
         result = runner.run(args.target, force=args.force)

@@ -20,6 +20,9 @@ import mlflow
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import root_mean_squared_error
 
+# Import centralized configuration
+from config import get_config
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -210,32 +213,9 @@ def main():
     # Set to False for actual runs, True for testing purposes
     testing = True
     
-    # Default configuration
-    tracking_server_host = "ec2-18-223-115-201.us-east-2.compute.amazonaws.com"
-    aws_profile = "mlops_zc"
-    
-    # Pipeline configuration
-    config = {
-        'mlflow': {
-            'tracking_server_host': tracking_server_host,
-            'aws_profile': aws_profile,
-            'experiment_name': 'nyc-taxi-experiment'  # Match reference script
-        },
-        'model': {
-            'params': {
-                'learning_rate': 0.09585355369315604,
-                'max_depth': 30,
-                'min_child_weight': 1.060597050922164,
-                'objective': 'reg:squarederror',
-                'reg_alpha': 0.018060244040060163,
-                'reg_lambda': 0.011658731377413597,
-                'seed': 42
-            }
-        },
-        'artifacts': {
-            'models_dir': '/home/ubuntu/mlops-dlp/mlflow/models'
-        }
-    }
+    # Load centralized configuration
+    config_manager = get_config()
+    config = config_manager.get_script_config('simple')
     
     # Initialize pipeline
     pipeline = MLPipeline(config)
@@ -251,7 +231,20 @@ def main():
         parser = argparse.ArgumentParser(description='Train a model to predict taxi trip duration.')
         parser.add_argument('--year', type=int, required=True, help='Year of the data to train on')
         parser.add_argument('--month', type=int, required=True, help='Month of the data to train on')
+        parser.add_argument('--tracking-server-host', type=str, help='MLflow tracking server host')
+        parser.add_argument('--aws-profile', type=str, help='AWS profile to use')
         args = parser.parse_args()
+
+        # Update configuration if command line arguments provided
+        if args.tracking_server_host:
+            config_manager.update_mlflow_settings(tracking_server_host=args.tracking_server_host)
+            config = config_manager.get_script_config('simple')
+            pipeline = MLPipeline(config)
+        
+        if args.aws_profile:
+            config_manager.update_mlflow_settings(aws_profile=args.aws_profile)
+            config = config_manager.get_script_config('simple')
+            pipeline = MLPipeline(config)
 
         run_id = pipeline.run(year=args.year, month=args.month)
         print(f"MLflow run_id: {run_id}")

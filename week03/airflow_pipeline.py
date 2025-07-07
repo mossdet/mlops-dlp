@@ -18,6 +18,9 @@ import mlflow
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import root_mean_squared_error
 
+# Import centralized configuration
+from config import get_config
+
 # Airflow imports (would be available in an Airflow environment)
 try:
     from airflow import DAG
@@ -46,36 +49,8 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-# Global configuration
-CONFIG = {
-    'mlflow': {
-        'tracking_server_host': 'ec2-18-223-115-201.us-east-2.compute.amazonaws.com',  # EC2 MLflow server
-        'aws_profile': 'mlops_zc',  # AWS profile for authentication
-        'experiment_name': 'nyc-taxi-experiment'  # Match reference script
-    },
-    'data': {
-        'year': 2021,  # Updated default to match reference script
-        'month': 1
-    },
-    'model': {
-        'params': {
-            # Optimized hyperparameters from reference script
-            'learning_rate': 0.09585355369315604,
-            'max_depth': 30,
-            'min_child_weight': 1.060597050922164,
-            'objective': 'reg:squarederror',
-            'reg_alpha': 0.018060244040060163,
-            'reg_lambda': 0.011658731377413597,
-            'seed': 42
-        },
-        'num_boost_round': 30,
-        'early_stopping_rounds': 50
-    },
-    'artifacts': {
-        'models_dir': '/home/ubuntu/mlops-dlp/mlflow/models',
-        'data_dir': '/home/ubuntu/mlops-dlp/data'
-    }
-}
+# Load centralized configuration
+CONFIG = get_config().get_script_config('airflow')
 
 def setup_mlflow():
     """Setup MLflow tracking"""
@@ -478,24 +453,32 @@ if __name__ == "__main__":
     parser.add_argument('--year', type=int, default=2021, help='Year for data processing (default: 2021)')
     parser.add_argument('--month', type=int, default=1, help='Month for data processing (default: 1)')
     parser.add_argument('--tracking-server-host', type=str, 
-                       default='ec2-18-223-115-201.us-east-2.compute.amazonaws.com',
-                       help='MLflow tracking server host (default: EC2 instance)')
-    parser.add_argument('--aws-profile', type=str, default='mlops_zc',
-                       help='AWS profile for authentication (default: mlops_zc)')
+                       help='MLflow tracking server host (overrides config)')
+    parser.add_argument('--aws-profile', type=str,
+                       help='AWS profile for authentication (overrides config)')
     
     args = parser.parse_args()
     
-    # Update CONFIG with command line arguments
-    CONFIG['data']['year'] = args.year
-    CONFIG['data']['month'] = args.month
-    CONFIG['mlflow']['tracking_server_host'] = args.tracking_server_host
-    CONFIG['mlflow']['aws_profile'] = args.aws_profile
+    # Get configuration manager and update if command line arguments provided
+    config_manager = get_config()
+    
+    if args.tracking_server_host or args.aws_profile:
+        config_manager.update_mlflow_settings(
+            tracking_server_host=args.tracking_server_host,
+            aws_profile=args.aws_profile
+        )
+    
+    if args.year or args.month:
+        config_manager.update_data_settings(year=args.year, month=args.month)
+    
+    # Reload configuration after updates
+    CONFIG = config_manager.get_script_config('airflow')
     
     print(f"Configuration:")
-    print(f"  Year: {args.year}")
-    print(f"  Month: {args.month}")
-    print(f"  MLflow Tracking Server: {args.tracking_server_host}")
-    print(f"  AWS Profile: {args.aws_profile}")
+    print(f"  Year: {CONFIG['data']['year']}")
+    print(f"  Month: {CONFIG['data']['month']}")
+    print(f"  MLflow Tracking Server: {CONFIG['mlflow']['tracking_server_host']}")
+    print(f"  AWS Profile: {CONFIG['mlflow']['aws_profile']}")
     print()
     
     run_pipeline_standalone()

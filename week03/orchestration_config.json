@@ -1,0 +1,33 @@
+{
+  "mlflow": {
+    "tracking_server_host": "ec2-18-223-115-201.us-east-2.compute.amazonaws.com",
+    "aws_profile": "mlops_zc",
+    "experiment_name": "nyc-taxi-experiment"
+  },
+  "data": {
+    "year": 2021,
+    "month": 1,
+    "url_template": "https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_{year}-{month:02d}.parquet"
+  },
+  "model": {
+    "params": {
+      "learning_rate": 0.09585355369315604,
+      "max_depth": 30,
+      "min_child_weight": 1.060597050922164,
+      "objective": "reg:squarederror",
+      "reg_alpha": 0.018060244040060163,
+      "reg_lambda": 0.011658731377413597,
+      "seed": 42
+    },
+    "num_boost_round": 30,
+    "early_stopping_rounds": 50
+  },
+  "artifacts": {
+    "models_dir": "/home/ubuntu/mlops-dlp/week03/mlflow/models",
+    "data_dir": "/home/ubuntu/mlops-dlp/data"
+  },
+  "validation": {
+    "max_rmse": 8.0,
+    "min_rmse": 0.1
+  }
+}

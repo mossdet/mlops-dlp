@@ -394,40 +394,97 @@ graph TD
 
 ## 🔧 Configuration
 
-### Global Configuration
-Each pipeline uses a similar configuration structure:
+### 🎯 Centralized Configuration Management
 
-```python
-CONFIG = {
-    'mlflow': {
-        'tracking_server_host': 'ec2-18-223-115-201.us-east-2.compute.amazonaws.com',  # EC2 MLflow server
-        'aws_profile': 'mlops_zc',  # AWS profile for authentication
-        'experiment_name': 'orchestration-pipeline-{type}'
+**NEW**: All orchestration scripts now use a **centralized configuration system** via `config.py` for consistent settings across all examples.
+
+#### Configuration File: `orchestration_config.json`
+```json
+{
+  "mlflow": {
+    "tracking_server_host": "ec2-18-223-115-201.us-east-2.compute.amazonaws.com",
+    "aws_profile": "mlops_zc", 
+    "experiment_name": "nyc-taxi-experiment"
+  },
+  "data": {
+    "year": 2021,
+    "month": 1,
+    "url_template": "https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_{year}-{month:02d}.parquet"
+  },
+  "model": {
+    "params": {
+      "learning_rate": 0.09585355369315604,
+      "max_depth": 30,
+      "min_child_weight": 1.060597050922164,
+      "objective": "reg:squarederror",
+      "reg_alpha": 0.018060244040060163,
+      "reg_lambda": 0.011658731377413597,
+      "seed": 42
     },
-    'data': {
-        'year': 2021,  # Updated default to match reference script
-        'month': 1
-    },
-    'model': {
-        'params': {
-            # Optimized hyperparameters from reference script
-            'learning_rate': 0.09585355369315604,
-            'max_depth': 30,
-            'min_child_weight': 1.060597050922164,
-            'objective': 'reg:squarederror',
-            'reg_alpha': 0.018060244040060163,
-            'reg_lambda': 0.011658731377413597,
-            'seed': 42
-        },
-        'num_boost_round': 30,
-        'early_stopping_rounds': 50
-    },
-    'artifacts': {
-        'models_dir': '/home/ubuntu/mlops-dlp/mlflow/models',
-        'data_dir': '/home/ubuntu/mlops-dlp/data'
-    }
+    "num_boost_round": 30,
+    "early_stopping_rounds": 50
+  },
+  "artifacts": {
+    "models_dir": "/home/ubuntu/mlops-dlp/week03/mlflow/models",
+    "data_dir": "/home/ubuntu/mlops-dlp/data"
+  }
 }
 ```
+
+#### Using the Configuration Manager
+
+**Display current configuration:**
+```bash
+python config.py --show
+```
+
+**Update MLflow settings:**
+```bash
+# Update tracking server
+python -c "from config import get_config; c=get_config(); c.update_mlflow_settings('new-server.com'); c.save_config()"
+
+# Update AWS profile
+python -c "from config import get_config; c=get_config(); c.update_mlflow_settings(aws_profile='new-profile'); c.save_config()"
+```
+
+**Update data settings:**
+```bash
+python -c "from config import get_config; c=get_config(); c.update_data_settings(year=2022, month=3); c.save_config()"
+```
+
+#### Command Line Overrides
+
+All scripts support command line overrides that temporarily override the configuration:
+
+```bash
+# Simple Pipeline
+python simple_pipeline.py --year 2021 --month 2 --tracking-server-host custom-server.com --aws-profile custom-profile
+
+# Airflow Pipeline  
+python airflow_pipeline.py --year 2021 --month 2 --tracking-server-host custom-server.com --aws-profile custom-profile
+
+# Prefect Pipeline
+python prefect_pipeline.py --year 2021 --month 2 --tracking-server-host custom-server.com --aws-profile custom-profile
+
+# Make Pipeline
+python make_pipeline.py --year 2021 --month 2 --tracking-server-host custom-server.com --aws-profile custom-profile
+```
+
+#### Benefits of Centralized Configuration
+
+- **🔄 Consistency**: All scripts use identical settings automatically
+- **⚙️ Easy Updates**: Change settings once, apply everywhere
+- **🛡️ Version Control**: Configuration stored in JSON for easy tracking
+- **🔧 Flexibility**: Override settings per script run when needed
+- **📊 Transparency**: Clear visibility into current settings
+
+### Script-Specific Configuration
+
+Each script automatically gets a customized experiment name:
+- `simple_pipeline.py` → `nyc-taxi-experiment-simple`
+- `airflow_pipeline.py` → `nyc-taxi-experiment-airflow`  
+- `prefect_pipeline.py` → `nyc-taxi-experiment-prefect`
+- `make_pipeline.py` → `nyc-taxi-experiment-make`
 
 ### Customization
 You can modify the configuration to:
