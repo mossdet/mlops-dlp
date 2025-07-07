@@ -43,6 +43,7 @@ Pipeline orchestration is crucial for managing the complexity of ML workflows in
 - **Scalability**: Approaches that scale from prototype to production
 - **Monitoring**: Observability and debugging capabilities
 - **Artifact Management**: Handling data, models, and intermediate results
+- **Reference Alignment**: Prefect example fully aligned with `duration-prediction.py` for consistency
 
 ## 📁 Files Overview
 
@@ -86,13 +87,17 @@ python airflow_pipeline.py
 ```
 
 ### 3. `prefect_pipeline.py` - Prefect Workflow
-Modern workflow orchestration with Prefect 2.0.
+Modern workflow orchestration with Prefect 2.0, aligned with the reference `duration-prediction.py` script.
 
 **Features:**
-- Flow and task decorators
-- Advanced retry strategies
-- Data validation steps
-- Better observability and debugging
+- Flow and task decorators (no deprecated SequentialTaskRunner)
+- Advanced retry strategies with configurable delays
+- Data validation steps with quality checks
+- Next month validation data (train/val split like reference script)
+- XGBoost native API with DMatrix (matching reference implementation)
+- MLflow tracking with EC2 server integration
+- Command-line argument support for production use
+- Sparse feature vectorization and optimized feature engineering
 
 **Expected Runtime:** ~55-75 seconds (with validation steps)
 
@@ -101,12 +106,24 @@ Modern workflow orchestration with Prefect 2.0.
 # Install Prefect (optional for this example)
 pip install prefect
 
-# Run standalone
+# Run with command line arguments (production mode)
 python prefect_pipeline.py --year=2021 --month=1 --tracking-server-host=ec2-18-223-115-201.us-east-2.compute.amazonaws.com --aws-profile=mlops_zc
+
+# Run in testing mode (edit script to set testing=True)
+python prefect_pipeline.py
 
 # Or deploy to Prefect server
 # prefect deployment build-from-flow prefect_pipeline.py:ml_pipeline_flow
 ```
+
+**Key Improvements from Reference Script:**
+- Uses only `PU_DO` as categorical feature (not separate PULocationID/DOLocationID)  
+- DictVectorizer with `sparse=True` for memory efficiency
+- Validation on next month's data (proper train/val split)
+- XGBoost native training API with DMatrix objects
+- Model parameters match reference script's optimized hyperparameters
+- Proper artifact logging and preprocessor saving
+- Run ID saved to file for downstream processing
 
 ### 4. `make_pipeline.py` - Make-like Task Runner
 Simple dependency-based task runner inspired by GNU Make.
@@ -244,6 +261,8 @@ python --version  # Should be 3.8+
 | **Task Dependencies** | Linear | DAG | Flow | DAG | Sequential |
 | **Parallel Execution** | No | Yes | Yes | No | No |
 | **Error Recovery** | Basic | Advanced | Advanced | None | Basic |
+| **Reference Alignment** | Partial | Partial | **Full** | Partial | Basic |
+| **MLflow Integration** | Basic | Advanced | **EC2 Server** | Basic | Basic |
 
 ##  Pipeline Architecture
 
@@ -251,31 +270,35 @@ All examples implement the same ML pipeline with these steps:
 
 ```mermaid
 graph TD
-    A[Extract Data] --> B[Validate Data]
-    B --> C[Transform Data]
-    C --> D[Prepare Features]
-    D --> E[Train Model]
-    E --> F[Validate Model]
-    F --> G[Save Artifacts]
-    G --> H[Deploy Model]
-    H --> I[Cleanup]
+    A[Extract Training Data] --> B[Extract Validation Data]
+    A --> C[Validate Data Quality]
+    C --> D[Transform Training Data]
+    B --> E[Transform Validation Data]
+    D --> F[Prepare Features]
+    E --> F
+    F --> G[Train Model with Validation]
+    G --> H[Validate Model Quality]
+    H --> I[Save Artifacts]
+    I --> J[Save Run ID]
+    J --> K[Cleanup]
     
     style A fill:#e1f5fe
-    style E fill:#f3e5f5
-    style H fill:#e8f5e8
+    style G fill:#f3e5f5
+    style I fill:#e8f5e8
 ```
 
 ### Step Details:
 
-1. **Extract** - Download raw NYC taxi data from cloud source
-2. **Validate** - Check data quality and completeness (Prefect only)
-3. **Transform** - Clean outliers, calculate trip duration, feature engineering
-4. **Features** - Create feature vectors using DictVectorizer
-5. **Train** - Train XGBoost model with MLflow tracking
-6. **Validate** - Check model performance against thresholds
-7. **Save** - Store model artifacts and metadata
-8. **Deploy** - Simulate model deployment process
-9. **Cleanup** - Remove temporary files and cache
+1. **Extract Training Data** - Download raw NYC taxi data for training month
+2. **Extract Validation Data** - Download next month's data for validation (Prefect)
+3. **Validate** - Check data quality and completeness 
+4. **Transform** - Clean outliers, calculate trip duration, feature engineering
+5. **Features** - Create feature vectors using DictVectorizer (sparse=True for Prefect)
+6. **Train** - Train XGBoost model with validation data and MLflow tracking
+7. **Validate Model** - Check model performance against quality thresholds
+8. **Save Artifacts** - Store model artifacts, preprocessor, and metadata
+9. **Save Run ID** - Write run ID to file for downstream processing
+10. **Cleanup** - Remove temporary files and cache
 
 ## 🔧 Configuration
 
@@ -285,21 +308,27 @@ Each pipeline uses a similar configuration structure:
 ```python
 CONFIG = {
     'mlflow': {
-        'db_path': '/home/ubuntu/mlops-dlp/mlflow/mlflow.db',
+        'tracking_server_host': 'ec2-18-223-115-201.us-east-2.compute.amazonaws.com',  # EC2 MLflow server
+        'aws_profile': 'mlops_zc',  # AWS profile for authentication
         'experiment_name': 'orchestration-pipeline-{type}'
     },
     'data': {
-        'year': 2023,
-        'month': 1,
-        'url_template': 'https://d37ci6vzurychx.cloudfront.net/trip-data/...'
+        'year': 2021,  # Updated default to match reference script
+        'month': 1
     },
     'model': {
         'params': {
-            'max_depth': 6,
-            'learning_rate': 0.1,
-            'n_estimators': 100,
-            'random_state': 42
-        }
+            # Optimized hyperparameters from reference script
+            'learning_rate': 0.09585355369315604,
+            'max_depth': 30,
+            'min_child_weight': 1.060597050922164,
+            'objective': 'reg:squarederror',
+            'reg_alpha': 0.018060244040060163,
+            'reg_lambda': 0.011658731377413597,
+            'seed': 42
+        },
+        'num_boost_round': 30,
+        'early_stopping_rounds': 50
     },
     'artifacts': {
         'models_dir': '/home/ubuntu/mlops-dlp/mlflow/models',
@@ -310,10 +339,11 @@ CONFIG = {
 
 ### Customization
 You can modify the configuration to:
-- Change data source (year/month)
-- Adjust model hyperparameters
-- Update file paths
-- Modify MLflow experiment names
+- Change data source (year/month) - defaults to 2021/1 to match reference script
+- Adjust model hyperparameters (optimized values included)
+- Update MLflow tracking server host and AWS profile
+- Modify file paths and experiment names
+- Switch between testing and production modes
 
 ## 🎯 Learning Objectives
 
@@ -479,15 +509,23 @@ mkdir -p /home/ubuntu/mlops-dlp/mlflow/models
 mkdir -p /home/ubuntu/mlops-dlp/data
 ```
 
-#### 3. **MLflow Database Issues**
+#### 3. **MLflow Tracking Issues**
 ```bash
-# Error: Database locked or corrupted
+# Error: Connection refused to tracking server
+# Check if EC2 instance is running and accessible
+ping ec2-18-223-115-201.us-east-2.compute.amazonaws.com
+
+# Error: AWS authentication issues
+aws configure --profile mlops_zc
+# Or export AWS_PROFILE=mlops_zc
+
+# Error: Experiment not found
+# Check experiment name in MLflow UI
+# Pipeline will create experiment if it doesn't exist
+
+# Error: Local database issues (for non-Prefect pipelines)
 rm -f /home/ubuntu/mlops-dlp/mlflow/mlflow.db
 # Pipeline will recreate the database
-
-# Error: SQLite version issues
-python -c "import sqlite3; print(sqlite3.sqlite_version)"
-# Should be 3.8+
 ```
 
 #### 4. **Memory/Disk Space Issues**
@@ -543,18 +581,25 @@ python make_pipeline.py deploy --year 2022 --month 12
 # Run specific pipeline
 python simple_pipeline.py
 python airflow_pipeline.py  
-python prefect_pipeline.py
+python prefect_pipeline.py  # Testing mode (edit script to set testing=True)
 python make_pipeline.py deploy
+
+# Run Prefect with arguments (production mode)
+python prefect_pipeline.py --year=2021 --month=1 --tracking-server-host=ec2-18-223-115-201.us-east-2.compute.amazonaws.com --aws-profile=mlops_zc
 
 # Troubleshooting
 python make_pipeline.py --clean  # Clean cache
 python make_pipeline.py --list   # Show available tasks
 python --version                 # Check Python version
-pip list | grep -E "(mlflow|pandas|xgboost|scikit-learn)"  # Check packages
+pip list | grep -E "(mlflow|pandas|xgboost|scikit-learn|prefect)"  # Check packages
 
 # Advanced usage
-python make_pipeline.py deploy --year 2023 --month 3 --force
+python make_pipeline.py deploy --year 2021 --month 3 --force
 python make_pipeline.py validate  # Run only up to validation step
+
+# MLflow server connectivity test
+ping ec2-18-223-115-201.us-east-2.compute.amazonaws.com
+aws configure list-profiles  # Check AWS profiles
 ```
 
 ---
