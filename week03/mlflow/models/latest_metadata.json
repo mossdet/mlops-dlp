@@ -1,0 +1,16 @@
+{
+  "run_id": "03809abe1578487187848058498e1ad7",
+  "rmse": 6.607733723268311,
+  "timestamp": "2025-07-07T04:47:51.461143",
+  "model_params": {
+    "learning_rate": 0.09585355369315604,
+    "max_depth": 30,
+    "min_child_weight": 1.060597050922164,
+    "objective": "reg:squarederror",
+    "reg_alpha": 0.018060244040060163,
+    "reg_lambda": 0.011658731377413597,
+    "seed": 42
+  },
+  "training_samples": 73908,
+  "validation_samples": 61921
+}

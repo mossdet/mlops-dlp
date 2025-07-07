@@ -4,18 +4,6 @@ Prefect Workflow Example for ML Pipeline Orchestration
 
 This script demonstrates how to create a Prefect workflow for orchestrating
 ML pipelines with better error handling, retries, and observability.
-
-CORRECTED TO ALIGN WITH REFERENCE SCRIPT (duration-prediction.py):
-- Feature engineering uses only PU_DO as categorical feature (not separate PULocationID/DOLocationID)
-- DictVectorizer configured with sparse=True to match reference
-- Validation uses next month's data (like train/val split in reference)
-- Uses XGBoost's DMatrix and native training API (not XGBRegressor)
-- MLflow logging structure matches reference script
-- Model parameters match the reference script's best_params
-- Saves preprocessor and logs artifacts like reference
-- Adds command-line argument support
-- Saves run_id to file as in reference
-- Uses year=2021, month=1 as default for testing
 """
 import time
 import pickle

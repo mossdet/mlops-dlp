@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import pickle
 import logging
+import os
 
 import pandas as pd
 import xgboost as xgb
@@ -22,17 +23,23 @@ try:
     from airflow import DAG
     from airflow.operators.python import PythonOperator
     from airflow.operators.bash import BashOperator
-    from airflow.utils.dates import days_ago
+    try:
+        import pendulum
+        start_date = pendulum.today('UTC').add(days=-1)
+    except ImportError:
+        from airflow.utils.dates import days_ago
+        start_date = days_ago(1)
     AIRFLOW_AVAILABLE = True
 except ImportError:
     AIRFLOW_AVAILABLE = False
+    start_date = datetime(2023, 1, 1)
     print("Airflow not installed. This is a template showing DAG structure.")
 
 # Default arguments for the DAG
 default_args = {
     'owner': 'mlops-team',
     'depends_on_past': False,
-    'start_date': days_ago(1) if AIRFLOW_AVAILABLE else datetime(2023, 1, 1),
+    'start_date': start_date,
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
@@ -42,20 +49,27 @@ default_args = {
 # Global configuration
 CONFIG = {
     'mlflow': {
-        'db_path': '/home/ubuntu/mlops-dlp/mlflow/mlflow.db',
-        'experiment_name': 'orchestration-pipeline-airflow'
+        'tracking_server_host': 'ec2-18-223-115-201.us-east-2.compute.amazonaws.com',  # EC2 MLflow server
+        'aws_profile': 'mlops_zc',  # AWS profile for authentication
+        'experiment_name': 'nyc-taxi-experiment'  # Match reference script
     },
     'data': {
-        'year': 2023,
+        'year': 2021,  # Updated default to match reference script
         'month': 1
     },
     'model': {
         'params': {
-            'max_depth': 6,
-            'learning_rate': 0.1,
-            'n_estimators': 100,
-            'random_state': 42
-        }
+            # Optimized hyperparameters from reference script
+            'learning_rate': 0.09585355369315604,
+            'max_depth': 30,
+            'min_child_weight': 1.060597050922164,
+            'objective': 'reg:squarederror',
+            'reg_alpha': 0.018060244040060163,
+            'reg_lambda': 0.011658731377413597,
+            'seed': 42
+        },
+        'num_boost_round': 30,
+        'early_stopping_rounds': 50
     },
     'artifacts': {
         'models_dir': '/home/ubuntu/mlops-dlp/mlflow/models',
@@ -65,55 +79,23 @@ CONFIG = {
 
 def setup_mlflow():
     """Setup MLflow tracking"""
-    mlflow_db_path = CONFIG['mlflow']['db_path']
-    tracking_uri = f"sqlite:///{mlflow_db_path}"
+    os.environ["AWS_PROFILE"] = CONFIG['mlflow']['aws_profile']
+    tracking_server_host = CONFIG['mlflow']['tracking_server_host']
+    tracking_uri = f"http://{tracking_server_host}:5000"
     
     mlflow.set_tracking_uri(tracking_uri)
     mlflow.set_experiment(CONFIG['mlflow']['experiment_name'])
     logging.info(f"MLflow tracking URI set to: {tracking_uri}")
 
-def extract_data_task(**context):
+def read_dataframe(year: int, month: int) -> pd.DataFrame:
     """
-    Airflow task: Extract data from source
+    Data extraction and basic transformation (matching reference script)
     """
-    year = CONFIG['data']['year']
-    month = CONFIG['data']['month']
-    
-    logging.info(f"Extracting data for {year}-{month:02d}")
+    logging.info(f"Reading dataframe for {year}-{month:02d}")
     
     url = f'https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_{year}-{month:02d}.parquet'
     
-    try:
-        df = pd.read_parquet(url)
-        
-        # Save raw data
-        data_dir = Path(CONFIG['artifacts']['data_dir'])
-        data_dir.mkdir(parents=True, exist_ok=True)
-        
-        raw_data_path = data_dir / f"raw_data_{year}_{month:02d}.parquet"
-        df.to_parquet(raw_data_path)
-        
-        logging.info(f"Successfully extracted {len(df)} records to {raw_data_path}")
-        
-        # Pass file path to next task
-        return str(raw_data_path)
-        
-    except Exception as e:
-        logging.error(f"Failed to extract data: {e}")
-        raise
-
-def transform_data_task(**context):
-    """
-    Airflow task: Transform and clean data
-    """
-    # Get file path from previous task
-    ti = context['ti']
-    raw_data_path = ti.xcom_pull(task_ids='extract_data')
-    
-    logging.info(f"Transforming data from {raw_data_path}")
-    
-    # Load raw data
-    df = pd.read_parquet(raw_data_path)
+    df = pd.read_parquet(url)
     
     # Calculate duration
     df['duration'] = df.lpep_dropoff_datetime - df.lpep_pickup_datetime
@@ -122,71 +104,135 @@ def transform_data_task(**context):
     # Filter outliers
     df = df[(df.duration >= 1) & (df.duration <= 60)]
     
-    # Feature engineering
+    # Feature engineering (matching reference script)
     categorical = ['PULocationID', 'DOLocationID']
     df[categorical] = df[categorical].astype(str)
     df['PU_DO'] = df['PULocationID'] + '_' + df['DOLocationID']
     
-    # Save processed data
-    data_dir = Path(CONFIG['artifacts']['data_dir'])
-    processed_data_path = data_dir / f"processed_data_{CONFIG['data']['year']}_{CONFIG['data']['month']:02d}.parquet"
-    df.to_parquet(processed_data_path)
+    return df
+
+def create_X(df: pd.DataFrame, dv=None):
+    """
+    Create feature matrix (matching reference script)
+    """
+    categorical = ['PU_DO']  # Only PU_DO as categorical, matching reference
+    numerical = ['trip_distance']
+    dicts = df[categorical + numerical].to_dict(orient='records')
+
+    if dv is None:
+        dv = DictVectorizer(sparse=True)  # sparse=True matching reference
+        X = dv.fit_transform(dicts)
+    else:
+        X = dv.transform(dicts)
+
+    return X, dv
+
+def extract_data_task(**context):
+    """
+    Airflow task: Extract training and validation data
+    """
+    year = CONFIG['data']['year']
+    month = CONFIG['data']['month']
     
-    logging.info(f"Data transformed. Final shape: {df.shape}")
-    logging.info(f"Processed data saved to {processed_data_path}")
+    logging.info(f"Extracting training data for {year}-{month:02d}")
     
-    return str(processed_data_path)
+    try:
+        # Extract training data
+        df_train = read_dataframe(year, month)
+        
+        # Extract validation data (next month)
+        next_year = year if month < 12 else year + 1
+        next_month = month + 1 if month < 12 else 1
+        logging.info(f"Extracting validation data for {next_year}-{next_month:02d}")
+        df_val = read_dataframe(next_year, next_month)
+        
+        # Save data
+        data_dir = Path(CONFIG['artifacts']['data_dir'])
+        data_dir.mkdir(parents=True, exist_ok=True)
+        
+        train_data_path = data_dir / f"train_data_{year}_{month:02d}.parquet"
+        val_data_path = data_dir / f"val_data_{next_year}_{next_month:02d}.parquet"
+        
+        df_train.to_parquet(train_data_path)
+        df_val.to_parquet(val_data_path)
+        
+        logging.info(f"Successfully extracted {len(df_train)} training and {len(df_val)} validation records")
+        
+        # Return both paths
+        return {
+            'train_data_path': str(train_data_path),
+            'val_data_path': str(val_data_path)
+        }
+        
+    except Exception as e:
+        logging.error(f"Failed to extract data: {e}")
+        raise
 
 def prepare_features_task(**context):
     """
-    Airflow task: Prepare features for training
+    Airflow task: Prepare features for training and validation
     """
-    # Get file path from previous task
+    # Get file paths from previous task
     ti = context['ti']
-    processed_data_path = ti.xcom_pull(task_ids='transform_data')
+    data_paths = ti.xcom_pull(task_ids='extract_data')
     
-    logging.info(f"Preparing features from {processed_data_path}")
+    train_data_path = data_paths['train_data_path']
+    val_data_path = data_paths['val_data_path']
     
-    # Load processed data
-    df = pd.read_parquet(processed_data_path)
+    logging.info(f"Preparing features from {train_data_path} and {val_data_path}")
     
-    categorical = ['PULocationID', 'DOLocationID', 'PU_DO']
-    numerical = ['trip_distance']
+    # Load data
+    df_train = pd.read_parquet(train_data_path)
+    df_val = pd.read_parquet(val_data_path)
     
-    dv = DictVectorizer()
+    # Prepare features (matching reference script)
+    X_train, dv = create_X(df_train)
+    X_val, _ = create_X(df_val, dv)
     
-    train_dicts = df[categorical + numerical].to_dict(orient='records')
-    X_train = dv.fit_transform(train_dicts)
-    y_train = df.duration.values
+    # Get target values
+    target = 'duration'
+    y_train = df_train[target].values
+    y_val = df_val[target].values
     
     # Save features and vectorizer
     data_dir = Path(CONFIG['artifacts']['data_dir'])
     
-    features_path = data_dir / f"features_{CONFIG['data']['year']}_{CONFIG['data']['month']:02d}.pkl"
-    targets_path = data_dir / f"targets_{CONFIG['data']['year']}_{CONFIG['data']['month']:02d}.pkl"
+    features_train_path = data_dir / f"features_train_{CONFIG['data']['year']}_{CONFIG['data']['month']:02d}.pkl"
+    targets_train_path = data_dir / f"targets_train_{CONFIG['data']['year']}_{CONFIG['data']['month']:02d}.pkl"
+    features_val_path = data_dir / f"features_val_{CONFIG['data']['year']}_{CONFIG['data']['month']:02d}.pkl"
+    targets_val_path = data_dir / f"targets_val_{CONFIG['data']['year']}_{CONFIG['data']['month']:02d}.pkl"
     vectorizer_path = data_dir / f"vectorizer_{CONFIG['data']['year']}_{CONFIG['data']['month']:02d}.pkl"
     
     # Save using pickle
-    with open(features_path, 'wb') as f:
+    with open(features_train_path, 'wb') as f:
         pickle.dump(X_train, f)
     
-    with open(targets_path, 'wb') as f:
+    with open(targets_train_path, 'wb') as f:
         pickle.dump(y_train, f)
+    
+    with open(features_val_path, 'wb') as f:
+        pickle.dump(X_val, f)
+    
+    with open(targets_val_path, 'wb') as f:
+        pickle.dump(y_val, f)
         
     with open(vectorizer_path, 'wb') as f:
         pickle.dump(dv, f)
     
-    logging.info(f"Features prepared. Shape: {X_train.shape}")
+    logging.info(f"Training features shape: {X_train.shape}")
+    logging.info(f"Validation features shape: {X_val.shape}")
     
     return {
-        'features_path': str(features_path),
-        'targets_path': str(targets_path),
+        'features_train_path': str(features_train_path),
+        'targets_train_path': str(targets_train_path),
+        'features_val_path': str(features_val_path),
+        'targets_val_path': str(targets_val_path),
         'vectorizer_path': str(vectorizer_path)
     }
 
 def train_model_task(**context):
     """
-    Airflow task: Train ML model
+    Airflow task: Train ML model (matching reference script)
     """
     setup_mlflow()
     
@@ -197,74 +243,85 @@ def train_model_task(**context):
     logging.info("Training model")
     
     # Load features and targets
-    with open(paths['features_path'], 'rb') as f:
+    with open(paths['features_train_path'], 'rb') as f:
         X_train = pickle.load(f)
     
-    with open(paths['targets_path'], 'rb') as f:
+    with open(paths['targets_train_path'], 'rb') as f:
         y_train = pickle.load(f)
     
-    with mlflow.start_run():
-        # Model parameters
-        params = CONFIG['model']['params']
-        
-        # Train model
-        model = xgb.XGBRegressor(**params)
-        model.fit(X_train, y_train)
-        
-        # Make predictions
-        y_pred = model.predict(X_train)
-        rmse = root_mean_squared_error(y_train, y_pred)
-        
-        # Log to MLflow
-        mlflow.log_params(params)
-        mlflow.log_metric("rmse", rmse)
-        mlflow.xgboost.log_model(model, "model")
-        
-        # Get run ID
-        run_id = mlflow.active_run().info.run_id
-        
-        logging.info(f"Model trained. RMSE: {rmse:.4f}, Run ID: {run_id}")
-        
-        return {
-            'run_id': run_id,
-            'rmse': rmse,
-            'vectorizer_path': paths['vectorizer_path']
-        }
+    with open(paths['features_val_path'], 'rb') as f:
+        X_val = pickle.load(f)
+    
+    with open(paths['targets_val_path'], 'rb') as f:
+        y_val = pickle.load(f)
+    
+    with open(paths['vectorizer_path'], 'rb') as f:
+        dv = pickle.load(f)
+    
+    with mlflow.start_run() as run:
+        # Create DMatrix objects for XGBoost native API
+        train = xgb.DMatrix(X_train, label=y_train)
+        valid = xgb.DMatrix(X_val, label=y_val)
 
-def save_model_task(**context):
+        # Model parameters (matching reference script)
+        best_params = CONFIG['model']['params']
+
+        # Log parameters
+        mlflow.log_params(best_params)
+
+        # Train model using XGBoost native API
+        booster = xgb.train(
+            params=best_params,
+            dtrain=train,
+            num_boost_round=CONFIG['model']['num_boost_round'],
+            evals=[(valid, 'validation')],
+            early_stopping_rounds=CONFIG['model']['early_stopping_rounds']
+        )
+
+        # Make predictions on validation set
+        y_pred = booster.predict(valid)
+        rmse = root_mean_squared_error(y_val, y_pred)
+        
+        # Log metrics
+        mlflow.log_metric("rmse", rmse)
+
+        # Save preprocessor (matching reference script)
+        models_dir = Path('/home/ubuntu/mlops-dlp/week03/mlflow/models/')
+        models_dir.mkdir(parents=True, exist_ok=True)
+        
+        preprocessor_path = models_dir / "preprocessor.b"
+        with open(preprocessor_path, "wb") as f_out:
+            pickle.dump(dv, f_out)
+        mlflow.log_artifact(str(preprocessor_path), artifact_path="preprocessor")
+
+        # Log model
+        mlflow.xgboost.log_model(booster, artifact_path="models_mlflow")
+        
+        run_id = run.info.run_id
+        
+        logging.info(f"Model trained successfully. RMSE: {rmse:.4f}")
+        logging.info(f"Run ID: {run_id}")
+        
+        return run_id
+
+def save_run_id_task(**context):
     """
-    Airflow task: Save model artifacts
+    Airflow task: Save run ID to file (matching reference script)
     """
-    # Get results from previous task
+    # Get run_id from previous task
     ti = context['ti']
-    results = ti.xcom_pull(task_ids='train_model')
+    run_id = ti.xcom_pull(task_ids='train_model')
     
-    logging.info(f"Saving model artifacts for run {results['run_id']}")
+    logging.info(f"Saving run ID: {run_id}")
     
-    models_dir = Path(CONFIG['artifacts']['models_dir'])
-    models_dir.mkdir(parents=True, exist_ok=True)
+    # Save run ID to file (matching reference script)
+    run_id_fpath = Path(os.path.dirname(os.path.abspath(__file__))) / "run_id.txt"
+    run_id_fpath.parent.mkdir(parents=True, exist_ok=True)
+    with open(run_id_fpath, "w") as f:
+        f.write(run_id)
     
-    # Copy vectorizer to models directory
-    import shutil
-    src_vectorizer = results['vectorizer_path']
-    dst_vectorizer = models_dir / f"vectorizer_{results['run_id']}.pkl"
-    shutil.copy2(src_vectorizer, dst_vectorizer)
-    
-    # Save run metadata
-    metadata = {
-        'run_id': results['run_id'],
-        'rmse': results['rmse'],
-        'timestamp': datetime.now().isoformat(),
-        'vectorizer_path': str(dst_vectorizer)
-    }
-    
-    metadata_path = models_dir / f"metadata_{results['run_id']}.pkl"
-    with open(metadata_path, 'wb') as f:
-        pickle.dump(metadata, f)
-    
-    logging.info(f"Model artifacts saved to {models_dir}")
-    
-    return metadata
+    logging.info(f"Run ID saved to {run_id_fpath}")
+    return str(run_id_fpath)
 
 def cleanup_task(**context):
     """
@@ -274,13 +331,33 @@ def cleanup_task(**context):
     
     data_dir = Path(CONFIG['artifacts']['data_dir'])
     
-    # Remove temporary data files (keep only the latest)
-    for file_pattern in ['raw_data_*.parquet', 'processed_data_*.parquet', 
-                        'features_*.pkl', 'targets_*.pkl', 'vectorizer_*.pkl']:
-        for file_path in data_dir.glob(file_pattern):
+    if not data_dir.exists():
+        logging.info("Data directory does not exist, no cleanup needed")
+        return
+    
+    # Remove temporary data files
+    year = CONFIG['data']['year']
+    month = CONFIG['data']['month']
+    
+    file_patterns = [
+        f'train_data_{year}_{month:02d}.parquet',
+        f'val_data_*_{month:02d}.parquet',
+        f'features_train_{year}_{month:02d}.pkl',
+        f'targets_train_{year}_{month:02d}.pkl',
+        f'features_val_{year}_{month:02d}.pkl',
+        f'targets_val_{year}_{month:02d}.pkl',
+        f'vectorizer_{year}_{month:02d}.pkl'
+    ]
+    
+    cleaned_files = 0
+    for pattern in file_patterns:
+        for file_path in data_dir.glob(pattern):
             if file_path.exists():
                 file_path.unlink()
                 logging.info(f"Cleaned up {file_path}")
+                cleaned_files += 1
+    
+    logging.info(f"Cleanup completed: {cleaned_files} files removed")
 
 # Create the DAG (only if Airflow is available)
 if AIRFLOW_AVAILABLE:
@@ -288,7 +365,7 @@ if AIRFLOW_AVAILABLE:
         'ml_pipeline_orchestration',
         default_args=default_args,
         description='ML Pipeline Orchestration with Airflow',
-        schedule_interval=timedelta(days=1),  # Daily execution
+        schedule=timedelta(days=1),  # Daily execution (updated from schedule_interval)
         catchup=False,
         tags=['mlops', 'machine-learning', 'orchestration'],
     )
@@ -297,12 +374,6 @@ if AIRFLOW_AVAILABLE:
     extract_task = PythonOperator(
         task_id='extract_data',
         python_callable=extract_data_task,
-        dag=dag,
-    )
-
-    transform_task = PythonOperator(
-        task_id='transform_data',
-        python_callable=transform_data_task,
         dag=dag,
     )
 
@@ -318,9 +389,9 @@ if AIRFLOW_AVAILABLE:
         dag=dag,
     )
 
-    save_task = PythonOperator(
-        task_id='save_model',
-        python_callable=save_model_task,
+    save_run_id_task_op = PythonOperator(
+        task_id='save_run_id',
+        python_callable=save_run_id_task,
         dag=dag,
     )
 
@@ -339,8 +410,7 @@ if AIRFLOW_AVAILABLE:
     )
 
     # Define task dependencies
-    extract_task >> transform_task >> features_task >> train_task >> save_task
-    save_task >> cleanup_task_op
+    extract_task >> features_task >> train_task >> save_run_id_task_op >> cleanup_task_op
     health_check >> extract_task
 
 else:
@@ -359,8 +429,8 @@ def run_pipeline_standalone():
     
     try:
         # Run tasks sequentially
-        raw_data_path = extract_data_task(**context)
-        print(f"✅ Data extraction completed: {raw_data_path}")
+        data_paths = extract_data_task(**context)
+        print(f"✅ Data extraction completed: {data_paths}")
         
         # Mock XCom for standalone execution
         class MockTI:
@@ -374,37 +444,58 @@ def run_pipeline_standalone():
                 self.data[key] = value
         
         mock_ti = MockTI()
-        mock_ti.data['extract_data'] = raw_data_path
+        mock_ti.data['extract_data'] = data_paths
         context['ti'] = mock_ti
-        
-        processed_data_path = transform_data_task(**context)
-        print(f"✅ Data transformation completed: {processed_data_path}")
-        
-        mock_ti.data['transform_data'] = processed_data_path
         
         feature_paths = prepare_features_task(**context)
         print(f"✅ Feature preparation completed")
         
         mock_ti.data['prepare_features'] = feature_paths
         
-        model_results = train_model_task(**context)
-        print(f"✅ Model training completed. Run ID: {model_results['run_id']}")
+        run_id = train_model_task(**context)
+        print(f"✅ Model training completed. Run ID: {run_id}")
         
-        mock_ti.data['train_model'] = model_results
+        mock_ti.data['train_model'] = run_id
         
-        metadata = save_model_task(**context)
-        print(f"✅ Model artifacts saved")
+        run_id_path = save_run_id_task(**context)
+        print(f"✅ Run ID saved to: {run_id_path}")
         
         cleanup_task(**context)
         print(f"✅ Cleanup completed")
         
         print(f"\n🎉 Pipeline completed successfully!")
-        print(f"   Run ID: {model_results['run_id']}")
-        print(f"   RMSE: {model_results['rmse']:.4f}")
+        print(f"   Run ID: {run_id}")
+        print(f"   Run ID file: {run_id_path}")
         
     except Exception as e:
         print(f"❌ Pipeline failed: {e}")
         raise
 
 if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Apache Airflow ML Pipeline Orchestration")
+    parser.add_argument('--year', type=int, default=2021, help='Year for data processing (default: 2021)')
+    parser.add_argument('--month', type=int, default=1, help='Month for data processing (default: 1)')
+    parser.add_argument('--tracking-server-host', type=str, 
+                       default='ec2-18-223-115-201.us-east-2.compute.amazonaws.com',
+                       help='MLflow tracking server host (default: EC2 instance)')
+    parser.add_argument('--aws-profile', type=str, default='mlops_zc',
+                       help='AWS profile for authentication (default: mlops_zc)')
+    
+    args = parser.parse_args()
+    
+    # Update CONFIG with command line arguments
+    CONFIG['data']['year'] = args.year
+    CONFIG['data']['month'] = args.month
+    CONFIG['mlflow']['tracking_server_host'] = args.tracking_server_host
+    CONFIG['mlflow']['aws_profile'] = args.aws_profile
+    
+    print(f"Configuration:")
+    print(f"  Year: {args.year}")
+    print(f"  Month: {args.month}")
+    print(f"  MLflow Tracking Server: {args.tracking_server_host}")
+    print(f"  AWS Profile: {args.aws_profile}")
+    print()
+    
     run_pipeline_standalone()

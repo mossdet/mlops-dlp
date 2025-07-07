@@ -37,8 +37,9 @@ class TaskRunner:
     
     def setup_mlflow(self):
         """Setup MLflow tracking"""
-        mlflow_db_path = self.config['mlflow']['db_path']
-        tracking_uri = f"sqlite:///{mlflow_db_path}"
+        os.environ["AWS_PROFILE"] = self.config['mlflow']['aws_profile']
+        tracking_server_host = self.config['mlflow']['tracking_server_host']
+        tracking_uri = f"http://{tracking_server_host}:5000"
         
         mlflow.set_tracking_uri(tracking_uri)
         mlflow.set_experiment(self.config['mlflow']['experiment_name'])
@@ -166,31 +167,41 @@ class TaskRunner:
 # Global configuration
 CONFIG = {
     'mlflow': {
-        'db_path': '/home/ubuntu/mlops-dlp/mlflow/mlflow.db',
-        'experiment_name': 'orchestration-pipeline-make'
+        'tracking_server_host': 'ec2-18-223-115-201.us-east-2.compute.amazonaws.com',  # EC2 MLflow server
+        'aws_profile': 'mlops_zc',  # AWS profile for authentication
+        'experiment_name': 'nyc-taxi-experiment'  # Match reference script
     },
     'data': {
-        'year': 2023,
+        'year': 2021,  # Updated default to match reference script
         'month': 1,
         'url_template': 'https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_{year}-{month:02d}.parquet'
     },
     'model': {
         'params': {
-            'max_depth': 6,
-            'learning_rate': 0.1,
-            'n_estimators': 100,
-            'random_state': 42
-        }
+            # Optimized hyperparameters from reference script
+            'learning_rate': 0.09585355369315604,
+            'max_depth': 30,
+            'min_child_weight': 1.060597050922164,
+            'objective': 'reg:squarederror',
+            'reg_alpha': 0.018060244040060163,
+            'reg_lambda': 0.011658731377413597,
+            'seed': 42
+        },
+        'num_boost_round': 30,
+        'early_stopping_rounds': 50
     },
     'paths': {
         'data_dir': '/home/ubuntu/mlops-dlp/data',
-        'models_dir': '/home/ubuntu/mlops-dlp/mlflow/models',
-        'raw_data': '/home/ubuntu/mlops-dlp/data/raw_data.parquet',
-        'processed_data': '/home/ubuntu/mlops-dlp/data/processed_data.parquet',
-        'features': '/home/ubuntu/mlops-dlp/data/features.pkl',
-        'targets': '/home/ubuntu/mlops-dlp/data/targets.pkl',
+        'models_dir': '/home/ubuntu/mlops-dlp/week03/mlflow/models',
+        'train_data': '/home/ubuntu/mlops-dlp/data/train_data.parquet',
+        'val_data': '/home/ubuntu/mlops-dlp/data/val_data.parquet',
+        'features_train': '/home/ubuntu/mlops-dlp/data/features_train.pkl',
+        'features_val': '/home/ubuntu/mlops-dlp/data/features_val.pkl',
+        'targets_train': '/home/ubuntu/mlops-dlp/data/targets_train.pkl',
+        'targets_val': '/home/ubuntu/mlops-dlp/data/targets_val.pkl',
         'vectorizer': '/home/ubuntu/mlops-dlp/data/vectorizer.pkl',
-        'model_metadata': '/home/ubuntu/mlops-dlp/mlflow/models/latest_metadata.json'
+        'model_metadata': '/home/ubuntu/mlops-dlp/week03/mlflow/models/latest_metadata.json',
+        'run_id_file': '/home/ubuntu/mlops-dlp/week03/run_id.txt'
     },
     'cache_dir': '/home/ubuntu/mlops-dlp/.cache'
 }
@@ -199,37 +210,39 @@ CONFIG = {
 runner = TaskRunner(CONFIG)
 
 @runner.task('extract', 
-             outputs=[CONFIG['paths']['raw_data']])
+             outputs=[CONFIG['paths']['train_data'], CONFIG['paths']['val_data']])
 def extract_data():
-    """Extract raw data from source"""
+    """Extract training and validation data (matching reference script)"""
     year = CONFIG['data']['year']
     month = CONFIG['data']['month']
-    url = CONFIG['data']['url_template'].format(year=year, month=month)
     
-    print(f"Downloading data from {url}")
+    # Extract training data
+    url_train = CONFIG['data']['url_template'].format(year=year, month=month)
+    print(f"Downloading training data from {url_train}")
+    df_train = pd.read_parquet(url_train)
     
-    df = pd.read_parquet(url)
+    # Extract validation data (next month)
+    next_year = year if month < 12 else year + 1
+    next_month = month + 1 if month < 12 else 1
+    url_val = CONFIG['data']['url_template'].format(year=next_year, month=next_month)
+    print(f"Downloading validation data from {url_val}")
+    df_val = pd.read_parquet(url_val)
     
     # Ensure data directory exists
     Path(CONFIG['paths']['data_dir']).mkdir(parents=True, exist_ok=True)
     
     # Save raw data
-    df.to_parquet(CONFIG['paths']['raw_data'])
+    df_train.to_parquet(CONFIG['paths']['train_data'])
+    df_val.to_parquet(CONFIG['paths']['val_data'])
     
-    print(f"Extracted {len(df)} records to {CONFIG['paths']['raw_data']}")
-    return CONFIG['paths']['raw_data']
+    print(f"Extracted {len(df_train)} training and {len(df_val)} validation records")
+    return {'train_size': len(df_train), 'val_size': len(df_val)}
 
-@runner.task('transform', 
-             depends_on=['extract'],
-             inputs=[CONFIG['paths']['raw_data']],
-             outputs=[CONFIG['paths']['processed_data']])
-def transform_data():
-    """Transform raw data"""
-    print(f"Transforming data from {CONFIG['paths']['raw_data']}")
-    
-    # Load raw data
-    df = pd.read_parquet(CONFIG['paths']['raw_data'])
-    original_size = len(df)
+def read_dataframe(filepath: str) -> pd.DataFrame:
+    """
+    Data transformation (matching reference script)
+    """
+    df = pd.read_parquet(filepath)
     
     # Calculate duration
     df['duration'] = df.lpep_dropoff_datetime - df.lpep_pickup_datetime
@@ -238,114 +251,168 @@ def transform_data():
     # Filter outliers
     df = df[(df.duration >= 1) & (df.duration <= 60)]
     
-    # Feature engineering
+    # Feature engineering (matching reference script)
     categorical = ['PULocationID', 'DOLocationID']
     df[categorical] = df[categorical].astype(str)
     df['PU_DO'] = df['PULocationID'] + '_' + df['DOLocationID']
     
-    # Save processed data
-    df.to_parquet(CONFIG['paths']['processed_data'])
-    
-    print(f"Transformed data: {original_size} -> {len(df)} records")
-    return CONFIG['paths']['processed_data']
+    return df
+
+def create_X(df: pd.DataFrame, dv=None):
+    """
+    Create feature matrix (matching reference script)
+    """
+    categorical = ['PU_DO']  # Only PU_DO as categorical, matching reference
+    numerical = ['trip_distance']
+    dicts = df[categorical + numerical].to_dict(orient='records')
+
+    if dv is None:
+        dv = DictVectorizer(sparse=True)  # sparse=True matching reference
+        X = dv.fit_transform(dicts)
+    else:
+        X = dv.transform(dicts)
+
+    return X, dv
 
 @runner.task('features',
-             depends_on=['transform'],
-             inputs=[CONFIG['paths']['processed_data']],
-             outputs=[CONFIG['paths']['features'], 
-                     CONFIG['paths']['targets'], 
+             depends_on=['extract'],
+             inputs=[CONFIG['paths']['train_data'], CONFIG['paths']['val_data']],
+             outputs=[CONFIG['paths']['features_train'], 
+                     CONFIG['paths']['features_val'],
+                     CONFIG['paths']['targets_train'], 
+                     CONFIG['paths']['targets_val'],
                      CONFIG['paths']['vectorizer']])
 def prepare_features():
-    """Prepare features for training"""
-    print(f"Preparing features from {CONFIG['paths']['processed_data']}")
+    """Prepare features for training (matching reference script)"""
+    print(f"Preparing features from training and validation data")
     
-    # Load processed data
-    df = pd.read_parquet(CONFIG['paths']['processed_data'])
+    # Load and transform data
+    df_train = read_dataframe(CONFIG['paths']['train_data'])
+    df_val = read_dataframe(CONFIG['paths']['val_data'])
     
-    categorical = ['PULocationID', 'DOLocationID', 'PU_DO']
-    numerical = ['trip_distance']
+    # Prepare features (matching reference script)
+    X_train, dv = create_X(df_train)
+    X_val, _ = create_X(df_val, dv)
     
-    dv = DictVectorizer()
-    
-    train_dicts = df[categorical + numerical].to_dict(orient='records')
-    X_train = dv.fit_transform(train_dicts)
-    y_train = df.duration.values
+    # Get target values
+    target = 'duration'
+    y_train = df_train[target].values
+    y_val = df_val[target].values
     
     # Save features, targets, and vectorizer
-    with open(CONFIG['paths']['features'], 'wb') as f:
+    with open(CONFIG['paths']['features_train'], 'wb') as f:
         pickle.dump(X_train, f)
     
-    with open(CONFIG['paths']['targets'], 'wb') as f:
+    with open(CONFIG['paths']['features_val'], 'wb') as f:
+        pickle.dump(X_val, f)
+    
+    with open(CONFIG['paths']['targets_train'], 'wb') as f:
         pickle.dump(y_train, f)
+        
+    with open(CONFIG['paths']['targets_val'], 'wb') as f:
+        pickle.dump(y_val, f)
         
     with open(CONFIG['paths']['vectorizer'], 'wb') as f:
         pickle.dump(dv, f)
     
-    print(f"Features prepared. Shape: {X_train.shape}")
+    print(f"Training features shape: {X_train.shape}")
+    print(f"Validation features shape: {X_val.shape}")
     
     return {
-        'features_shape': X_train.shape,
-        'n_samples': len(y_train)
+        'train_shape': X_train.shape,
+        'val_shape': X_val.shape,
+        'n_train_samples': len(y_train),
+        'n_val_samples': len(y_val)
     }
 
 @runner.task('train',
              depends_on=['features'],
-             inputs=[CONFIG['paths']['features'], 
-                    CONFIG['paths']['targets'],
+             inputs=[CONFIG['paths']['features_train'], 
+                    CONFIG['paths']['features_val'],
+                    CONFIG['paths']['targets_train'],
+                    CONFIG['paths']['targets_val'],
                     CONFIG['paths']['vectorizer']],
-             outputs=[CONFIG['paths']['model_metadata']])
+             outputs=[CONFIG['paths']['model_metadata'], CONFIG['paths']['run_id_file']])
 def train_model():
-    """Train the ML model"""
+    """Train the ML model (matching reference script)"""
     print("Training model")
     
     # Load features and targets
-    with open(CONFIG['paths']['features'], 'rb') as f:
+    with open(CONFIG['paths']['features_train'], 'rb') as f:
         X_train = pickle.load(f)
     
-    with open(CONFIG['paths']['targets'], 'rb') as f:
-        y_train = pickle.load(f)
+    with open(CONFIG['paths']['features_val'], 'rb') as f:
+        X_val = pickle.load(f)
     
-    with mlflow.start_run():
-        # Model parameters
-        params = CONFIG['model']['params']
+    with open(CONFIG['paths']['targets_train'], 'rb') as f:
+        y_train = pickle.load(f)
         
-        # Train model
-        model = xgb.XGBRegressor(**params)
-        model.fit(X_train, y_train)
+    with open(CONFIG['paths']['targets_val'], 'rb') as f:
+        y_val = pickle.load(f)
         
-        # Make predictions
-        y_pred = model.predict(X_train)
-        rmse = root_mean_squared_error(y_train, y_pred)
+    with open(CONFIG['paths']['vectorizer'], 'rb') as f:
+        dv = pickle.load(f)
+    
+    with mlflow.start_run() as run:
+        # Create DMatrix objects for XGBoost native API
+        train = xgb.DMatrix(X_train, label=y_train)
+        valid = xgb.DMatrix(X_val, label=y_val)
+
+        # Model parameters (matching reference script)
+        best_params = CONFIG['model']['params']
+
+        # Log parameters
+        mlflow.log_params(best_params)
+
+        # Train model using XGBoost native API
+        booster = xgb.train(
+            params=best_params,
+            dtrain=train,
+            num_boost_round=CONFIG['model']['num_boost_round'],
+            evals=[(valid, 'validation')],
+            early_stopping_rounds=CONFIG['model']['early_stopping_rounds']
+        )
+
+        # Make predictions on validation set
+        y_pred = booster.predict(valid)
+        rmse = root_mean_squared_error(y_val, y_pred)
         
-        # Log to MLflow
-        mlflow.log_params(params)
+        # Log metrics
         mlflow.log_metric("rmse", rmse)
-        mlflow.xgboost.log_model(model, "model")
+
+        # Save preprocessor (matching reference script)
+        models_dir = Path(CONFIG['paths']['models_dir'])
+        models_dir.mkdir(parents=True, exist_ok=True)
         
-        # Get run ID
-        run_id = mlflow.active_run().info.run_id
+        preprocessor_path = models_dir / "preprocessor.b"
+        with open(preprocessor_path, "wb") as f_out:
+            pickle.dump(dv, f_out)
+        mlflow.log_artifact(str(preprocessor_path), artifact_path="preprocessor")
+
+        # Log model
+        mlflow.xgboost.log_model(booster, artifact_path="models_mlflow")
         
-        print(f"Model trained. RMSE: {rmse:.4f}, Run ID: {run_id}")
+        run_id = run.info.run_id
+        
+        print(f"Model trained successfully. RMSE: {rmse:.4f}")
+        print(f"Run ID: {run_id}")
         
         # Save metadata
         metadata = {
             'run_id': run_id,
             'rmse': rmse,
             'timestamp': datetime.now().isoformat(),
-            'model_params': params,
-            'training_samples': len(y_train)
+            'model_params': best_params,
+            'training_samples': len(y_train),
+            'validation_samples': len(y_val)
         }
-        
-        # Ensure models directory exists
-        Path(CONFIG['paths']['models_dir']).mkdir(parents=True, exist_ok=True)
         
         with open(CONFIG['paths']['model_metadata'], 'w') as f:
             json.dump(metadata, f, indent=2)
         
-        # Copy vectorizer to models directory
-        import shutil
-        vectorizer_dest = Path(CONFIG['paths']['models_dir']) / f"vectorizer_{run_id}.pkl"
-        shutil.copy2(CONFIG['paths']['vectorizer'], vectorizer_dest)
+        # Save run ID to file (matching reference script)
+        with open(CONFIG['paths']['run_id_file'], "w") as f:
+            f.write(run_id)
         
         return metadata
 
@@ -362,8 +429,8 @@ def validate_model():
     
     rmse = metadata['rmse']
     
-    # Quality checks
-    max_rmse = 10.0  # Maximum acceptable RMSE
+    # Quality checks (more lenient for taxi duration prediction)
+    max_rmse = 8.0  # Maximum acceptable RMSE for taxi duration
     
     if rmse > max_rmse:
         raise ValueError(f"Model validation failed: RMSE {rmse:.4f} > {max_rmse}")
@@ -389,7 +456,9 @@ def deploy_model():
         'deployed_at': datetime.now().isoformat(),
         'model_run_id': metadata['run_id'],
         'model_rmse': metadata['rmse'],
-        'deployment_status': 'success'
+        'deployment_status': 'success',
+        'training_samples': metadata.get('training_samples', 0),
+        'validation_samples': metadata.get('validation_samples', 0)
     }
     
     deployment_path = Path(CONFIG['paths']['models_dir']) / 'deployment_record.json'
@@ -399,22 +468,55 @@ def deploy_model():
     print(f"Model deployed successfully. Record saved to {deployment_path}")
     return deployment_record
 
+@runner.task('cleanup',
+             depends_on=['deploy'])
+def cleanup_temp_files():
+    """Clean up temporary files"""
+    print("Cleaning up temporary files")
+    
+    temp_files = [
+        CONFIG['paths']['train_data'],
+        CONFIG['paths']['val_data'],
+        CONFIG['paths']['features_train'],
+        CONFIG['paths']['features_val'],
+        CONFIG['paths']['targets_train'],
+        CONFIG['paths']['targets_val'],
+        CONFIG['paths']['vectorizer']
+    ]
+    
+    cleaned_count = 0
+    for temp_file in temp_files:
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
+            print(f"Removed {temp_file}")
+            cleaned_count += 1
+    
+    print(f"Cleanup completed: {cleaned_count} files removed")
+    return cleaned_count
+
 def main():
     """Main function with CLI interface"""
-    parser = argparse.ArgumentParser(description='ML Pipeline Task Runner')
+    parser = argparse.ArgumentParser(description='ML Pipeline Task Runner (Make-style)')
     parser.add_argument('target', nargs='?', default='deploy', 
                        help='Target task to run (default: deploy)')
     parser.add_argument('--list', action='store_true', help='List all tasks')
     parser.add_argument('--clean', action='store_true', help='Clean cache')
     parser.add_argument('--force', action='store_true', help='Force rebuild all tasks')
-    parser.add_argument('--year', type=int, default=2023, help='Data year')
-    parser.add_argument('--month', type=int, default=1, help='Data month')
+    parser.add_argument('--year', type=int, default=2021, help='Data year (default: 2021)')
+    parser.add_argument('--month', type=int, default=1, help='Data month (default: 1)')
+    parser.add_argument('--tracking-server-host', type=str, 
+                       default='ec2-18-223-115-201.us-east-2.compute.amazonaws.com',
+                       help='MLflow tracking server host (default: EC2 instance)')
+    parser.add_argument('--aws-profile', type=str, default='mlops_zc',
+                       help='AWS profile for authentication (default: mlops_zc)')
     
     args = parser.parse_args()
     
     # Update configuration with CLI arguments
     CONFIG['data']['year'] = args.year
     CONFIG['data']['month'] = args.month
+    CONFIG['mlflow']['tracking_server_host'] = args.tracking_server_host
+    CONFIG['mlflow']['aws_profile'] = args.aws_profile
     
     if args.list:
         runner.list_tasks()
@@ -429,6 +531,8 @@ def main():
         print(f"🎯 Target: {args.target}")
         print(f"📅 Data: {args.year}-{args.month:02d}")
         print(f"🔄 Force rebuild: {args.force}")
+        print(f"🌐 MLflow Server: {args.tracking_server_host}")
+        print(f"☁️ AWS Profile: {args.aws_profile}")
         print("-" * 50)
         
         result = runner.run(args.target, force=args.force)
@@ -436,11 +540,16 @@ def main():
         print("\n" + "=" * 50)
         print("🎉 Pipeline completed successfully!")
         
-        if args.target == 'deploy' and os.path.exists(CONFIG['paths']['model_metadata']):
+        if args.target in ['deploy', 'train'] and os.path.exists(CONFIG['paths']['model_metadata']):
             with open(CONFIG['paths']['model_metadata'], 'r') as f:
                 metadata = json.load(f)
             print(f"📊 Final model RMSE: {metadata['rmse']:.4f}")
             print(f"🆔 Model run ID: {metadata['run_id']}")
+            
+        if os.path.exists(CONFIG['paths']['run_id_file']):
+            with open(CONFIG['paths']['run_id_file'], 'r') as f:
+                run_id = f.read().strip()
+            print(f"📄 Run ID saved to: {CONFIG['paths']['run_id_file']}")
         
     except Exception as e:
         print(f"\n❌ Pipeline failed: {e}")

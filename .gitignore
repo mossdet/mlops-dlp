@@ -13,3 +13,4 @@ mlflow/*
 mlruns/*
 *mlflow_cases*
 *.db
+data/*

@@ -8,6 +8,7 @@ without external orchestration tools, showing the fundamental concepts.
 
 import os
 import pickle
+import argparse
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -35,6 +36,7 @@ class MLPipeline:
         
     def setup_mlflow(self):
         """Setup MLflow tracking"""
+        os.environ["AWS_PROFILE"] = self.config['mlflow']['aws_profile']
         tracking_server_host = self.config['mlflow']['tracking_server_host']
         tracking_uri = f"http://{tracking_server_host}:5000"
 
@@ -42,9 +44,9 @@ class MLPipeline:
         mlflow.set_experiment(self.config['mlflow']['experiment_name'])
         logger.info(f"MLflow tracking URI set to: {tracking_uri}")
     
-    def extract_data(self, year: int, month: int) -> pd.DataFrame:
+    def read_dataframe(self, year: int, month: int) -> pd.DataFrame:
         """
-        Data extraction step
+        Data extraction and basic transformation (matching reference script)
         
         Args:
             year: Year of the data
@@ -53,128 +55,116 @@ class MLPipeline:
         Returns:
             Processed DataFrame
         """
-        logger.info(f"Extracting data for {year}-{month:02d}")
+        logger.info(f"Reading dataframe for {year}-{month:02d}")
         
         url = f'https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_{year}-{month:02d}.parquet'
         
         try:
             df = pd.read_parquet(url)
-            logger.info(f"Successfully loaded {len(df)} records")
+            
+            # Calculate duration
+            df['duration'] = df.lpep_dropoff_datetime - df.lpep_pickup_datetime
+            df.duration = df.duration.apply(lambda td: td.total_seconds() / 60)
+            
+            # Filter outliers
+            df = df[(df.duration >= 1) & (df.duration <= 60)]
+            
+            # Feature engineering (matching reference script)
+            categorical = ['PULocationID', 'DOLocationID']
+            df[categorical] = df[categorical].astype(str)
+            df['PU_DO'] = df['PULocationID'] + '_' + df['DOLocationID']
+            
+            logger.info(f"Successfully loaded and processed {len(df)} records")
             return df
         except Exception as e:
             logger.error(f"Failed to extract data: {e}")
             raise
     
-    def transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
+    def create_X(self, df: pd.DataFrame, dv=None):
         """
-        Data transformation step
+        Create feature matrix (matching reference script)
         
         Args:
-            df: Raw DataFrame
+            df: DataFrame with features
+            dv: Optional pre-fitted DictVectorizer
             
         Returns:
-            Transformed DataFrame
+            Feature matrix and DictVectorizer
         """
-        logger.info("Transforming data")
-        
-        # Calculate duration
-        df['duration'] = df.lpep_dropoff_datetime - df.lpep_pickup_datetime
-        df.duration = df.duration.apply(lambda td: td.total_seconds() / 60)
-        
-        # Filter outliers
-        df = df[(df.duration >= 1) & (df.duration <= 60)]
-        
-        # Feature engineering
-        categorical = ['PULocationID', 'DOLocationID']
-        df[categorical] = df[categorical].astype(str)
-        df['PU_DO'] = df['PULocationID'] + '_' + df['DOLocationID']
-        
-        logger.info(f"Data transformed. Final shape: {df.shape}")
-        return df
-    
-    def prepare_features(self, df: pd.DataFrame) -> Tuple[Dict, Dict, DictVectorizer]:
-        """
-        Feature preparation step
-        
-        Args:
-            df: Transformed DataFrame
-            
-        Returns:
-            Training features, target values, and vectorizer
-        """
-        logger.info("Preparing features")
-        
-        categorical = ['PULocationID', 'DOLocationID', 'PU_DO']
+        categorical = ['PU_DO']  # Only PU_DO as categorical, matching reference
         numerical = ['trip_distance']
-        
-        dv = DictVectorizer()
-        
-        train_dicts = df[categorical + numerical].to_dict(orient='records')
-        X_train = dv.fit_transform(train_dicts)
-        y_train = df.duration.values
-        
-        logger.info(f"Features prepared. Shape: {X_train.shape}")
-        
-        return X_train, y_train, dv
+        dicts = df[categorical + numerical].to_dict(orient='records')
+
+        if dv is None:
+            dv = DictVectorizer(sparse=True)  # sparse=True matching reference
+            X = dv.fit_transform(dicts)
+        else:
+            X = dv.transform(dicts)
+
+        return X, dv
     
-    def train_model(self, X_train, y_train) -> xgb.XGBRegressor:
+    def train_model(self, X_train, y_train, X_val, y_val, dv):
         """
-        Model training step
+        Model training step (matching reference script)
         
         Args:
             X_train: Training features
             y_train: Training targets
+            X_val: Validation features
+            y_val: Validation targets
+            dv: DictVectorizer for saving
             
         Returns:
-            Trained model
+            MLflow run ID
         """
         logger.info("Training model")
         
-        with mlflow.start_run():
-            # Model parameters
-            params = self.config['model']['params']
+        with mlflow.start_run() as run:
+            # Create DMatrix objects for XGBoost native API
+            train = xgb.DMatrix(X_train, label=y_train)
+            valid = xgb.DMatrix(X_val, label=y_val)
+
+            # Model parameters (matching reference script)
+            best_params = self.config['model']['params']
+
+            # Log parameters
+            mlflow.log_params(best_params)
+
+            # Train model using XGBoost native API
+            booster = xgb.train(
+                params=best_params,
+                dtrain=train,
+                num_boost_round=30,
+                evals=[(valid, 'validation')],
+                early_stopping_rounds=50
+            )
+
+            # Make predictions on validation set
+            y_pred = booster.predict(valid)
+            rmse = root_mean_squared_error(y_val, y_pred)
             
-            # Train model
-            model = xgb.XGBRegressor(**params)
-            model.fit(X_train, y_train)
-            
-            # Make predictions
-            y_pred = model.predict(X_train)
-            rmse = root_mean_squared_error(y_train, y_pred)
-            
-            # Log to MLflow
-            mlflow.log_params(params)
+            # Log metrics
             mlflow.log_metric("rmse", rmse)
-            mlflow.xgboost.log_model(model, "model")
+
+            # Save preprocessor (matching reference script)
+            models_dir = Path('/home/ubuntu/mlops-dlp/week03/mlflow/models/')
+            models_dir.mkdir(parents=True, exist_ok=True)
             
-            logger.info(f"Model trained. RMSE: {rmse:.4f}")
+            preprocessor_path = models_dir / "preprocessor.b"
+            with open(preprocessor_path, "wb") as f_out:
+                pickle.dump(dv, f_out)
+            mlflow.log_artifact(str(preprocessor_path), artifact_path="preprocessor")
+
+            # Log model
+            mlflow.xgboost.log_model(booster, artifact_path="models_mlflow")
             
-            return model
+            logger.info(f"Model trained successfully. RMSE: {rmse:.4f}")
+            
+            return run.info.run_id
     
-    def save_artifacts(self, model, vectorizer, run_id: str):
+    def run(self, year: int, month: int) -> str:
         """
-        Save model artifacts
-        
-        Args:
-            model: Trained model
-            vectorizer: Feature vectorizer
-            run_id: MLflow run ID
-        """
-        logger.info("Saving artifacts")
-        
-        models_dir = Path(self.config['artifacts']['models_dir'])
-        models_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Save vectorizer
-        vectorizer_path = models_dir / f"vectorizer_{run_id}.pkl"
-        with open(vectorizer_path, 'wb') as f:
-            pickle.dump(vectorizer, f)
-        
-        logger.info(f"Artifacts saved to {models_dir}")
-    
-    def run_pipeline(self, year: int, month: int) -> str:
-        """
-        Run the complete ML pipeline
+        Run the complete ML pipeline (matching reference script structure)
         
         Args:
             year: Year of the data
@@ -186,23 +176,25 @@ class MLPipeline:
         logger.info(f"Starting ML pipeline for {year}-{month:02d}")
         
         try:
-            # Extract data
-            raw_data = self.extract_data(year, month)
-            
-            # Transform data
-            processed_data = self.transform_data(raw_data)
-            
+            # Extract training data
+            df_train = self.read_dataframe(year=year, month=month)
+
+            # Extract validation data (next month)
+            next_year = year if month < 12 else year + 1
+            next_month = month + 1 if month < 12 else 1
+            df_val = self.read_dataframe(year=next_year, month=next_month)
+
             # Prepare features
-            X_train, y_train, vectorizer = self.prepare_features(processed_data)
-            
+            X_train, dv = self.create_X(df_train)
+            X_val, _ = self.create_X(df_val, dv)
+
+            # Get target values
+            target = 'duration'
+            y_train = df_train[target].values
+            y_val = df_val[target].values
+
             # Train model
-            model = self.train_model(X_train, y_train)
-            
-            # Get current run ID
-            run_id = mlflow.active_run().info.run_id
-            
-            # Save artifacts
-            self.save_artifacts(model, vectorizer, run_id)
+            run_id = self.train_model(X_train, y_train, X_val, y_val, dv)
             
             logger.info(f"Pipeline completed successfully. Run ID: {run_id}")
             return run_id
@@ -214,15 +206,20 @@ class MLPipeline:
 
 def main():
     """Main execution function"""
-
-    os.environ["AWS_PROFILE"] = "mlops_zc" # fill in with your AWS profile. (generate with command: aws configure --profile mlops_zc)
-    TRACKING_SERVER_HOST = "ec2-18-223-115-201.us-east-2.compute.amazonaws.com" # fill in with the public DNS of the EC2 instance
+    
+    # Set to False for actual runs, True for testing purposes
+    testing = True
+    
+    # Default configuration
+    tracking_server_host = "ec2-18-223-115-201.us-east-2.compute.amazonaws.com"
+    aws_profile = "mlops_zc"
     
     # Pipeline configuration
     config = {
         'mlflow': {
-            'tracking_server_host': TRACKING_SERVER_HOST,
-            'experiment_name': 'nyc-taxi-orchestration-pipeline-simple'
+            'tracking_server_host': tracking_server_host,
+            'aws_profile': aws_profile,
+            'experiment_name': 'nyc-taxi-experiment'  # Match reference script
         },
         'model': {
             'params': {
@@ -243,10 +240,27 @@ def main():
     # Initialize pipeline
     pipeline = MLPipeline(config)
     
-    # Run pipeline for January 2023
-    run_id = pipeline.run_pipeline(year=2023, month=1)
-    
-    print(f"Pipeline completed with run ID: {run_id}")
+    if testing:
+        # Use fixed year and month for testing (matching reference script)
+        year = 2021
+        month = 1
+        run_id = pipeline.run(year=year, month=month)
+        print(f"MLflow run_id: {run_id}")
+    else:
+        # Use command line arguments for production
+        parser = argparse.ArgumentParser(description='Train a model to predict taxi trip duration.')
+        parser.add_argument('--year', type=int, required=True, help='Year of the data to train on')
+        parser.add_argument('--month', type=int, required=True, help='Month of the data to train on')
+        args = parser.parse_args()
+
+        run_id = pipeline.run(year=args.year, month=args.month)
+        print(f"MLflow run_id: {run_id}")
+
+    # Save run ID to file (matching reference script)
+    run_id_fpath = Path(os.path.dirname(os.path.abspath(__file__))) / "run_id.txt"
+    run_id_fpath.parent.mkdir(parents=True, exist_ok=True)
+    with open(run_id_fpath, "w") as f:
+        f.write(run_id)
 
 
 if __name__ == "__main__":
