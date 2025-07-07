@@ -62,7 +62,7 @@ Pipeline orchestration is crucial for managing the complexity of ML workflows in
 - **Scalability**: Approaches that scale from prototype to production
 - **Monitoring**: Observability and debugging capabilities
 - **Artifact Management**: Handling data, models, and intermediate results
-- **Reference Alignment**: Simple and Prefect examples fully aligned with `duration-prediction.py` for consistency
+- **Reference Alignment**: Ensuring all scripts are fully aligned with the reference implementation for consistency in feature engineering, model training, and MLflow tracking.
 
 ## 📁 Files Overview
 
