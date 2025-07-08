@@ -33,6 +33,115 @@ This week covers the fundamentals of machine learning model deployment, includin
 - They help avoid conflicts between package versions and ensure that each project has its own set of dependencies.
 - You can create a virtual environment using tools like `pipenv`, `conda`, `poetry` or , `uv`.
 - When creating a virtual environment, we prepend a path to the Python executable to the `PATH` environment variable, so that the virtual environment's Python interpreter is used instead of the system Python interpreter.
+- Creating virtual environment with Pipenv:
+#### 1.1 Install pipenv system-wide:
+```bash
+# Install pipenv system-wide
+# Update package lists
+sudo apt update
+
+# Install pipenv from Ubuntu repositories
+sudo apt install -y pipenv
+
+# Verify installation
+pipenv --version
+```
+
+#### 1.2 Creating a virtual environment with pipenv in the same project folder:
+
+By default, pipenv creates virtual environments in a centralized location. To create the virtual environment in your project folder, you have several options:
+
+**Method 1: Using PIPENV_VENV_IN_PROJECT environment variable**
+```bash
+# Navigate to your project directory
+cd /path/to/your/project
+
+# Set the environment variable to create venv in project folder
+export PIPENV_VENV_IN_PROJECT=1
+
+# Create Pipfile and virtual environment
+pipenv install
+
+# This creates a .venv folder in your current directory
+ls -la  # You should see a .venv folder
+```
+
+**Method 2: Set it permanently in your shell profile**
+```bash
+# Add to ~/.bashrc or ~/.zshrc for permanent setting
+echo 'export PIPENV_VENV_IN_PROJECT=1' >> ~/.bashrc
+source ~/.bashrc
+
+# Now all new pipenv projects will create .venv in project folder
+cd /path/to/your/project
+pipenv install
+```
+
+**Method 3: Using pipenv with specific Python version**
+```bash
+# Navigate to project folder
+cd /path/to/your/project
+
+# Set environment variable and create with specific Python version
+export PIPENV_VENV_IN_PROJECT=1
+pipenv --python 3.9
+
+# Or combine both commands
+PIPENV_VENV_IN_PROJECT=1 pipenv --python 3.9
+```
+
+**Working with the local virtual environment:**
+```bash
+# Activate the virtual environment
+pipenv shell
+
+# Install packages (creates/updates Pipfile and Pipfile.lock)
+pipenv install requests flask pandas
+
+# Install development dependencies
+pipenv install pytest --dev
+
+# Install from requirements.txt
+pipenv install -r requirements.txt
+
+# Show virtual environment location
+pipenv --venv
+
+# Show project location
+pipenv --where
+
+# Generate requirements.txt from Pipfile.lock
+pipenv requirements > requirements.txt
+
+# Exit the virtual environment
+exit
+```
+
+**Project structure with local .venv:**
+```
+your-project/
+├── .venv/              # Virtual environment (created by pipenv)
+│   ├── bin/
+│   ├── lib/
+│   └── ...
+├── Pipfile             # Dependency specification
+├── Pipfile.lock        # Locked dependency versions
+├── your_app.py
+└── requirements.txt    # (optional) for compatibility
+```
+
+**Benefits of local .venv folder:**
+- Easy to see which projects have virtual environments
+- Easier to delete the entire environment (just delete .venv folder)
+- Better for containerization (can include .venv in Docker images)
+- Simpler backup and version control management
+- IDE integration works more reliably
+
+**Important notes:**
+- Add `.venv/` to your `.gitignore` file
+- The `.venv` folder can be large, so exclude it from version control
+- Use `Pipfile` and `Pipfile.lock` for dependency management instead of `requirements.txt`
+
 
 ## 2. Containerization
 - Containerization is a method of packaging an application and its dependencies into a single unit called a container.
@@ -81,19 +190,17 @@ FROM python:3.14.0b3-slim-bullseye
 # install uv python
 # The installer requires curl (and certificates) to download the release archive
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
-
-# Install nano for editing files in the container
-RUN apt install nano
-
 # Download the latest installer
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
-
 # Run the installer then remove it
 RUN sh /uv-installer.sh && rm /uv-installer.sh
-
 # Ensure the installed binary is on the `PATH`
 ENV PATH="/root/.local/bin/:$PATH"
+
 WORKDIR /app
+
+# Copy the application code into the container
+COPY 
 ```
 - Build docker container:
 ```bash
@@ -101,7 +208,11 @@ docker build -t docker_example01 week04/Docker_examples/
 ```
 - Run docker container:
 ```bash
-docker run -it --entrypoint=bash docker_example01
+docker run -it --rm --entrypoint=bash docker_example01
+```
+- Run docker container with port mapping (Expose Port 5000 from container and map it to Port 5000 on the host):
+```bash
+docker run -it --rm -p 5000:5000 docker_example01   
 ```
 
 ## 3. Deployment Overview
