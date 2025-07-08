@@ -9,6 +9,9 @@ app = Flask(__name__)
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    # request allows us to get the data sent in the POST request
+    # In this case, we expect JSON data
+    # The data can be accessed using request.get_json(), which returns a dictionary
     data = request.get_json()
     # Simulate a prediction delay
     time.sleep(random.uniform(0.5, 2.0))
@@ -27,4 +30,4 @@ if __name__ == '__main__':
     # This allows you to access the app from any device on the same network
     # If you want to run it on a specific IP address, you can change '0.0.0.0' to your desired IP address
     # The port can also be changed to any available port
-    app.run(host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)

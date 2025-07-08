@@ -4,27 +4,64 @@
 This week covers the fundamentals of machine learning model deployment, including different deployment patterns, strategies, and tools used in production environments.
 
 ## 📚 Table of Contents
-- [1. Batch Processing](#1-batch-processing)
-- [2. Online Processing](#2-online-processing)
-  - [2.1 Web Service](#21-web-service)
-      - [2.1.1 What is HTTP?](#211-what-is-http)
-      - [2.1.2 HTTP Methods](#212-http-methods)
-  - [2.2 Streaming](#22-streaming)
-  - [2.3 Differences between Web Service and Streaming](#23-differences-between-web-service-and-streaming)
-- [3. Deployment Strategies](#3-deployment-strategies)
-- [4. Deployment Tools](#4-deployment-tools)
-  - [4.1 Model Management and Experiment Tracking](#41-model-management-and-experiment-tracking)
-  - [4.2 General Orchestration Tools](#42-general-orchestration-tools)
-  - [4.3 Containerization and Orchestration Tools](#43-containerization-and-orchestration-tools)
-  - [4.4 Model Deployment and Serving](#44-model-deployment-and-serving)
-  - [4.5 Data Storage and Management](#45-data-storage-and-management)
-  - [4.6 Data Processing and Streaming](#46-data-processing-and-streaming)
-  - [4.7 Monitoring and Visualization](#47-monitoring-and-visualization)
-  - [4.8 Model Monitoring and Management](#48-model-monitoring-and-management)
-  - [4.9 Data Versioning and Management](#49-data-versioning-and-management)
-- [5. Further Reading](#5-further-reading)
+- [1. Virtual Environments](#1-virtual-environments)
+- [2. Containerization](#2-containerization)
+- [3. Deployment Overview](#3-deployment-overview)
+- [4. Batch Processing](#4-batch-processing)
+- [5. Online Processing](#5-online-processing)
+  - [5.1 Web Service](#51-web-service)
+      - [5.1.1 What is HTTP?](#511-what-is-http)
+      - [5.1.2 HTTP Methods](#512-http-methods)
+  - [5.2 Streaming](#52-streaming)
+  - [5.3 Differences between Web Service and Streaming](#53-differences-between-web-service-and-streaming)
+- [6. Deployment Strategies](#6-deployment-strategies)
+- [7. Deployment Tools](#7-deployment-tools)
+  - [7.1 Model Management and Experiment Tracking](#71-model-management-and-experiment-tracking)
+  - [7.2 General Orchestration Tools](#72-general-orchestration-tools)
+  - [7.3 Containerization and Orchestration Tools](#73-containerization-and-orchestration-tools)
+  - [7.4 Model Deployment and Serving](#74-model-deployment-and-serving)
+  - [7.5 Data Storage and Management](#75-data-storage-and-management)
+  - [7.6 Data Processing and Streaming](#76-data-processing-and-streaming)
+  - [7.7 Monitoring and Visualization](#77-monitoring-and-visualization)
+  - [7.8 Model Monitoring and Management](#78-model-monitoring-and-management)
+  - [7.9 Data Versioning and Management](#79-data-versioning-and-management)
+- [8. Further Reading](#8-further-reading)
 
-# Deployment Overview
+## 1. Virtual Environments
+- Virtual environments are isolated Python environments that allow you to manage dependencies for different projects separately.
+- They help avoid conflicts between package versions and ensure that each project has its own set of dependencies.
+- You can create a virtual environment using tools like `pipenv`, `conda`, `poetry` or , `uv`.
+- When creating a virtual environment, we prepend a path to the Python executable to the `PATH` environment variable, so that the virtual environment's Python interpreter is used instead of the system Python interpreter.
+
+## 2. Containerization
+- Containerization is a method of packaging an application and its dependencies into a single unit called a container.
+- Containers are lightweight, portable, and can run consistently across different environments.
+- They encapsulate the application code, runtime, libraries, and configuration files, ensuring that the application runs the same way regardless of where it is deployed.
+- Docker is a popular tool for creating and managing containers.
+- Containers can be easily shared, deployed, and scaled, making them ideal for deploying machine learning models in production environments.
+- Containerization allows for better resource utilization and isolation, enabling multiple applications to run on the same host without interfering with each other.
+- It simplifies the deployment process, as the container can be run on any system that supports Docker without worrying about dependencies or environment configurations
+- Docker images can be built using a `Dockerfile`, which contains instructions for building the image
+- A `Dockerfile` typically includes:
+  - Base image (e.g., `python:3.8-slim`)
+  - Copying application code into the image
+  - Installing dependencies (e.g., using `pip install`)
+  - Setting environment variables
+  - Exposing ports for communication
+  - Defining the command to run the application
+```dockerfile
+# Example Dockerfile for a Flask application
+FROM python:3.8-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+EXPOSE 5000
+CMD ["python", "app.py"]
+```
+
+
+## 3. Deployment Overview
 
 ```mermaid
 graph TD
@@ -34,7 +71,8 @@ graph TD
     Online --> Streaming[Streaming]
 ```
 
-## 1. Batch Processing
+
+## 4. Batch Processing
 
 **Key Characteristics:**
 - Run the model periodically (hourly, daily, monthly)
@@ -55,8 +93,8 @@ graph TD
     > ▶️ Weekly product recommendations<br>
     > ▶️ Daily content personalization updates
 
-## 2. Online Processing
-### 2.1 Web Service
+## 5. Online Processing
+### 5.1 Web Service
 - A web service is a way to expose a model as an API endpoint
 - It allows other applications to interact with the model over HTTP
 - The web service can be built using frameworks like Flask or FastAPI
@@ -83,13 +121,13 @@ graph LR
         Model
     end
 ```
-#### 2.1.1 What is HTTP?
+#### 5.1.1 What is HTTP?
 The Hypertext Transfer Protocol (HTTP) is designed to enable communications between clients and servers. HTTP works as a request-response protocol between a client and server.
 - **Client**: The client is the application that sends a request to the server.
 - **Server**: The server is the application that receives the request and sends a response.
 - **Request**: The request is the message sent by the client to the server. It contains the information needed to process the request, such as the URL, headers, and body.
 - **Response**: The response is the message sent by the server to the client. It contains the information needed to process the response, such as the status code, headers, and body.
-#### 2.1.2 HTTP Methods
+#### 5.1.2 HTTP Methods
 - **GET**: Retrieve data from the server. It is used to fetch resources without modifying them.
 - **POST**: Send data to the server. It is used to create new resources or submit data for processing.
 - **PUT**: Update existing data on the server. It is used to replace the entire resource with the new data.
@@ -97,7 +135,7 @@ The Hypertext Transfer Protocol (HTTP) is designed to enable communications betw
 - **DELETE**: Remove data from the server. It is used to delete resources.
 
 
-### 2.2 Streaming
+### 5.2 Streaming
 - Streaming is a way to process data in real-time
 - It allows us to process data as it arrives, rather than waiting for a batch of data
 - In streaming, we have one (or more) producer and several consumers
@@ -147,7 +185,7 @@ graph LR
 
 ```
 
-### 2.3 Differences between Web Service and Streaming
+### 5.3 Differences between Web Service and Streaming
 
 | Aspect | Web Service | Streaming |
 |--------|-------------|-----------|
@@ -166,7 +204,7 @@ graph LR
 
 
 
-## 3. Deployment Strategies
+## 6. Deployment Strategies
 - **Blue/Green Deployment**: Two identical environments (blue and green) are maintained.
     - One environment is live (blue) while the other (green) is idle.
     - When a new version is ready, it is deployed to the idle environment (green).
@@ -181,54 +219,54 @@ graph LR
 
 
 
-## 4. Deployment Tools
+## 7. Deployment Tools
 
-### 4.1 Model Management and Experiment Tracking
+### 7.1 Model Management and Experiment Tracking
 - **MLflow**: Open-source platform for managing ML lifecycle, experiment tracking, and model deployment
 - **Weights & Biases**: Comprehensive ML platform for experiment tracking, dataset versioning, and model management
 - **Kubeflow Pipelines**: Kubernetes-native platform for building and deploying portable ML workflows
 
-### 4.2 General Orchestration Tools
+### 7.2 General Orchestration Tools
 - **Apache Airflow**: Platform for developing, scheduling, and monitoring workflows
 - **Prefect**: Modern workflow orchestration tool with improved UI and developer experience
 - **Dagster**: Data orchestrator for machine learning, analytics, and ETL
 
-### 4.3 Containerization and Orchestration Tools
+### 7.3 Containerization and Orchestration Tools
 - **Docker**: Platform for developing, shipping, and running applications in containers
 - **Kubernetes**: Container orchestration platform for automating deployment, scaling, and management
 - **Docker Compose**: Tool for defining and running multi-container Docker applications
 
-### 4.4 Model Deployment and Serving
+### 7.4 Model Deployment and Serving
 - **TensorFlow Serving**: Flexible, high-performance serving system for ML models
 - **TorchServe**: PyTorch serving framework for deploying models at scale
 - **BentoML**: Framework for building, shipping, and scaling AI applications
 - **Seldon Core**: Platform for deploying ML models on Kubernetes
 
-### 4.5 Data Storage and Management
+### 7.5 Data Storage and Management
 - **Amazon S3**: Object storage service with high availability and durability
 - **Google Cloud Storage**: Unified object storage for developers and enterprises
 - **PostgreSQL**: Advanced open-source relational database
 - **MongoDB**: Document database with high performance and availability
 
-### 4.6 Data Processing and Streaming
+### 7.6 Data Processing and Streaming
 - **Apache Spark**: Unified analytics engine for large-scale data processing
 - **Apache Kafka**: Distributed event streaming platform for high-performance data pipelines
 - **Apache Flink**: Framework for stateful computations over data streams
 - **Redis**: In-memory data structure store for caching and real-time analytics
 
-### 4.7 Monitoring and Visualization
+### 7.7 Monitoring and Visualization
 - **Grafana**: Open-source platform for monitoring and observability
 - **Prometheus**: Open-source monitoring system with time series database
 - **Kibana**: Data visualization dashboard for Elasticsearch
 - **DataDog**: Cloud monitoring service for servers, databases, and services
 
-### 4.8 Model Monitoring and Management
+### 7.8 Model Monitoring and Management
 - **Evidently AI**: Open-source tool for ML model monitoring and testing
 - **Fiddler**: Enterprise platform for ML model performance management
 - **Arize**: ML observability platform for model monitoring and explainability
 - **WhyLabs**: AI observability platform for monitoring data and ML models
 
-### 4.9 Data Versioning and Management
+### 7.9 Data Versioning and Management
 - **DVC**: Version control system for machine learning projects
 - **LakeFS**: Data version control for data lakes with Git-like operations
 - **Delta Lake**: Open-source storage layer that brings reliability to data lakes
@@ -236,6 +274,6 @@ graph LR
 
 
 
-## 5. Further Reading
+## 8. Further Reading
 - [MLOps: End-to-End Machine Learning Workflow](https://ml-ops.org/content/end-to-end-ml-workflow#model-deployment)
 - [MLOps: MLOps Principles](https://ml-ops.org/content/mlops-principles)
