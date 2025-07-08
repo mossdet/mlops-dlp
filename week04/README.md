@@ -55,9 +55,13 @@ graph TD
 
 ## 2. Online Processing
 ### 2.1 Web Service
+- A web service is a way to expose a model as an API endpoint
+- It allows other applications to interact with the model over HTTP
+- The web service can be built using frameworks like Flask or FastAPI
 - This service needs to be online always
 - In the case of a TaxiApp, it should be available at all times, providing the user with information like Price and Trip Duration
-- The connection between the ***Backend Service*** and the ***Ride Duration Service*** is kept alive until the ***Ride Duration Service*** sends a response to the ***Backend***
+- The connection between the ***Backend Service*** and the ***Ride Duration Service*** is kept alive until the ***Ride Duration Service*** sends a response to the ***Backend Service***
+- The web service can handle multiple requests concurrently, allowing for real-time predictions and interactions
 ```mermaid
 graph LR
     classDef sub opacity:0
@@ -77,6 +81,19 @@ graph LR
         Model
     end
 ```
+#### 2.1.1 What is HTTP?
+The Hypertext Transfer Protocol (HTTP) is designed to enable communications between clients and servers. HTTP works as a request-response protocol between a client and server.
+- **Client**: The client is the application that sends a request to the server.
+- **Server**: The server is the application that receives the request and sends a response.
+- **Request**: The request is the message sent by the client to the server. It contains the information needed to process the request, such as the URL, headers, and body.
+- **Response**: The response is the message sent by the server to the client. It contains the information needed to process the response, such as the status code, headers, and body.
+#### 2.1.2 HTTP Methods
+- **GET**: Retrieve data from the server. It is used to fetch resources without modifying them.
+- **POST**: Send data to the server. It is used to create new resources or submit data for processing.
+- **PUT**: Update existing data on the server. It is used to replace the entire resource with the new data.
+- **PATCH**: Partially update existing data on the server. It is used to modify specific fields of a resource.
+- **DELETE**: Remove data from the server. It is used to delete resources.
+
 
 ### 2.2 Streaming
 - Streaming is a way to process data in real-time
