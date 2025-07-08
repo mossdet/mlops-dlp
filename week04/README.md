@@ -59,6 +59,18 @@ COPY . .
 EXPOSE 5000
 CMD ["python", "app.py"]
 ```
+- A docker container can be run using the `docker run` command, which creates an instance of the image and starts it as a container
+- The container can be run in the background using the `-d` flag, and ports can be mapped to the host machine using the `-p` flag
+```bash
+# Example command to run a Docker container
+docker run -it --rm --entrypoint=bash python:3.14.0b3-slim-bullseye
+```
+- The `-it` flag allows for interactive terminal access, `--rm` removes the container after it exits, and `--entrypoint=bash` sets the entrypoint to a bash shell, allowing you to run commands inside the container interactively.
+- Docker containers can be easily shared and deployed across different environments, ensuring consistency and reproducibility in the deployment process.
+- Docker images can be stored in container registries like Docker Hub or private registries, allowing for easy distribution and versioning of containerized applications.
+- Containerization also enables scaling and orchestration of applications using tools like Kubernetes, which can manage multiple containers across a cluster of machines.
+- Container orchestration tools like Kubernetes allow for automated deployment, scaling, and management of containerized applications.
+- Kubernetes provides features like load balancing, service discovery, and rolling updates, making it easier to manage complex applications in production environments.
 
 
 ## 3. Deployment Overview
