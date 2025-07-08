@@ -6,6 +6,7 @@ This week covers the fundamentals of machine learning model deployment, includin
 ## 📚 Table of Contents
 - [1. Virtual Environments](#1-virtual-environments)
 - [2. Containerization](#2-containerization)
+    - [2.1 Dockerfile Example](#21-dockerfile-example)
 - [3. Deployment Overview](#3-deployment-overview)
 - [4. Batch Processing](#4-batch-processing)
 - [5. Online Processing](#5-online-processing)
@@ -72,6 +73,36 @@ docker run -it --rm --entrypoint=bash python:3.14.0b3-slim-bullseye
 - Container orchestration tools like Kubernetes allow for automated deployment, scaling, and management of containerized applications.
 - Kubernetes provides features like load balancing, service discovery, and rolling updates, making it easier to manage complex applications in production environments.
 
+### 2.1 Dockerfile Example
+```dockerfile
+# Example Dockerfile for a Flask application
+FROM python:3.14.0b3-slim-bullseye
+
+# install uv python
+# The installer requires curl (and certificates) to download the release archive
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+
+# Install nano for editing files in the container
+RUN apt install nano
+
+# Download the latest installer
+ADD https://astral.sh/uv/install.sh /uv-installer.sh
+
+# Run the installer then remove it
+RUN sh /uv-installer.sh && rm /uv-installer.sh
+
+# Ensure the installed binary is on the `PATH`
+ENV PATH="/root/.local/bin/:$PATH"
+WORKDIR /app
+```
+- Build docker container:
+```bash
+docker build -t docker_example01 week04/Docker_examples/
+```
+- Run docker container:
+```bash
+docker run -it --entrypoint=bash docker_example01
+```
 
 ## 3. Deployment Overview
 
