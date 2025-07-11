@@ -4,10 +4,10 @@ This repository contains an MLOps learning project showcasing the essential comp
 
 ## 📚 Table of Contents
 
-1. [Setup EC2 Development Environment](#01-setup-development-environment)
-2. [Experiment Tracking](#02-experiment-tracking)
-3. [Orchestration](#03-orchestration)
-4. [Deployment](#04-deployment)
+1. [Setup EC2 Development Environment](/week01/)
+2. [Experiment Tracking](/week02/)
+3. [Orchestration](/week03/)
+4. [Deployment](/week04/)
 
 ## [1. Setup EC2 Development Environment](/week01/) <a name="01-setup-development-environment"></a>
 
