@@ -48,7 +48,7 @@ class OrchestrationConfig:
         """Get default configuration"""
         return {
             "mlflow": {
-                "tracking_server_host": "ec2-18-223-115-201.us-east-2.compute.amazonaws.com",
+                "tracking_server_host": "ec2-18-224-229-190.us-east-2.compute.amazonaws.com",
                 "aws_profile": "mlops_zc",
                 "experiment_name": "nyc-taxi-experiment"
             },

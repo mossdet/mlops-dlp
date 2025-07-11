@@ -36,10 +36,10 @@ run_example() {
     
     echo ""
     echo "🚀 Running $name..."
-    echo "Command: python $script"
+    echo "Command: uv run python $script"
     echo "----------------------------------------"
     
-    if python "$script"; then
+    if uv run python "$script"; then
         echo "✅ $name completed successfully!"
     else
         echo "❌ $name failed!"
@@ -160,9 +160,9 @@ show_configuration() {
     echo ""
     
     # Display actual configuration from the centralized system
-    if command_exists python && [ -f "config.py" ]; then
+    if command_exists uv && [ -f "config.py" ]; then
         echo "📊 Live Configuration:"
-        python config.py --show 2>/dev/null || echo "   ⚠️  Could not load live config (using defaults below)"
+        uv run python config.py --show 2>/dev/null || echo "   ⚠️  Could not load live config (using defaults below)"
     else
         echo "�📅 Default Data:"
         echo "   Year: 2021, Month: 1 (aligned with reference script)"
@@ -188,10 +188,10 @@ show_configuration() {
     
     echo ""
     echo "💡 Configuration Management Tips:"
-    echo "   - View config: python config.py --show"
-    echo "   - Update MLflow server: python -c \"from config import get_config; c=get_config(); c.update_mlflow_settings('new-server'); c.save_config()\""
-    echo "   - Update AWS profile: python -c \"from config import get_config; c=get_config(); c.update_mlflow_settings(aws_profile='new-profile'); c.save_config()\""
-    echo "   - Override per run: python script.py --tracking-server-host custom-server --aws-profile custom-profile"
+    echo "   - View config: uv run python config.py --show"
+    echo "   - Update MLflow server: uv run python -c \"from config import get_config; c=get_config(); c.update_mlflow_settings('new-server'); c.save_config()\""
+    echo "   - Update AWS profile: uv run python -c \"from config import get_config; c=get_config(); c.update_mlflow_settings(aws_profile='new-profile'); c.save_config()\""
+    echo "   - Override per run: uv run python script.py --tracking-server-host custom-server --aws-profile custom-profile"
     echo ""
     echo "✅ ALL SCRIPTS FULLY ALIGNED with duration-prediction.py via centralized config"
     echo "🎯 Performance: Consistent RMSE ~6.60 across all examples"
@@ -205,7 +205,7 @@ test_components() {
     echo ""
     
     echo "1. Testing Python imports..."
-    if python -c "
+    if uv run python -c "
 import pandas as pd
 import xgboost as xgb
 import mlflow
@@ -221,7 +221,7 @@ print('✅ All required imports successful')
     
     echo ""
     echo "2. Testing data download..."
-    if python -c "
+    if uv run python -c "
 import pandas as pd
 url = 'https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2021-01.parquet'
 df = pd.read_parquet(url)
@@ -235,7 +235,7 @@ print(f'✅ Downloaded {len(df)} records from 2021-01')
     
     echo ""
     echo "3. Testing MLflow connection..."
-    if python -c "
+    if uv run python -c "
 import os
 import mlflow
 os.environ['AWS_PROFILE'] = 'mlops_zc'
@@ -253,7 +253,7 @@ except Exception as e:
     
     echo ""
     echo "4. Testing XGBoost training..."
-    if python -c "
+    if uv run python -c "
 import numpy as np
 import xgboost as xgb
 from sklearn.metrics import root_mean_squared_error
@@ -335,8 +335,9 @@ run_all() {
 # Main execution
 main() {
     # Check Python availability
-    if ! command_exists python; then
-        echo "❌ Error: Python is not installed or not in PATH"
+    if ! command_exists uv; then
+        echo "❌ Error: uv is not installed or not in PATH"
+        echo "Please install uv: https://docs.astral.sh/uv/getting-started/installation/"
         exit 1
     fi
     
@@ -345,33 +346,33 @@ main() {
     
     local missing_packages=()
     
-    if ! python -c "import pandas" 2>/dev/null; then
+    if ! uv run python -c "import pandas" 2>/dev/null; then
         missing_packages+=("pandas")
     else
-        echo "✅ pandas: $(python -c "import pandas; print(pandas.__version__)" 2>/dev/null)"
+        echo "✅ pandas: $(uv run python -c "import pandas; print(pandas.__version__)" 2>/dev/null)"
     fi
     
-    if ! python -c "import xgboost" 2>/dev/null; then
+    if ! uv run python -c "import xgboost" 2>/dev/null; then
         missing_packages+=("xgboost")
     else
-        echo "✅ xgboost: $(python -c "import xgboost; print(xgboost.__version__)" 2>/dev/null)"
+        echo "✅ xgboost: $(uv run python -c "import xgboost; print(xgboost.__version__)" 2>/dev/null)"
     fi
     
-    if ! python -c "import sklearn" 2>/dev/null; then
+    if ! uv run python -c "import sklearn" 2>/dev/null; then
         missing_packages+=("scikit-learn")
     else
-        echo "✅ scikit-learn: $(python -c "import sklearn; print(sklearn.__version__)" 2>/dev/null)"
+        echo "✅ scikit-learn: $(uv run python -c "import sklearn; print(sklearn.__version__)" 2>/dev/null)"
     fi
     
-    if ! python -c "import mlflow" 2>/dev/null; then
+    if ! uv run python -c "import mlflow" 2>/dev/null; then
         missing_packages+=("mlflow")
     else
-        echo "✅ mlflow: $(python -c "import mlflow; print(mlflow.__version__)" 2>/dev/null)"
+        echo "✅ mlflow: $(uv run python -c "import mlflow; print(mlflow.__version__)" 2>/dev/null)"
     fi
     
     if [ ${#missing_packages[@]} -gt 0 ]; then
         echo "❌ Missing required packages: ${missing_packages[*]}"
-        echo "Please install them with: pip install ${missing_packages[*]}"
+        echo "Please install them with: uv add ${missing_packages[*]}"
         exit 1
     fi
     

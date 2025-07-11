@@ -12,7 +12,7 @@ import os
 import argparse
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 import pandas as pd
 import xgboost as xgb
@@ -181,43 +181,6 @@ def transform_validation_data_task(raw_val_data_path: str, year: int, month: int
 
 @task
 def validate_data_task(raw_data_path: str) -> bool:
-    """
-    Validate extracted data quality
-    
-    Args:
-        raw_data_path: Path to raw data file
-        
-    Returns:
-        True if data passes validation
-    """
-    logger = get_run_logger()
-    
-    logger.info(f"Validating data from {raw_data_path}")
-    
-    df = pd.read_parquet(raw_data_path)
-    
-    # Data quality checks
-    checks = {
-        'non_empty': len(df) > 0,
-        'has_required_columns': all(col in df.columns for col in 
-                                  ['lpep_pickup_datetime', 'lpep_dropoff_datetime', 
-                                   'PULocationID', 'DOLocationID', 'trip_distance']),
-        'no_all_null_rows': not df.isnull().all(axis=1).any(),
-        'reasonable_size': 1000 <= len(df) <= 10000000  # Between 1K and 10M records
-    }
-    
-    passed_checks = sum(checks.values())
-    total_checks = len(checks)
-    
-    logger.info(f"Data validation: {passed_checks}/{total_checks} checks passed")
-    
-    for check_name, result in checks.items():
-        logger.info(f"  {check_name}: {'✅' if result else '❌'}")
-    
-    if passed_checks != total_checks:
-        raise ValueError(f"Data validation failed: {passed_checks}/{total_checks} checks passed")
-    
-    return True
     """
     Validate extracted data quality
     
@@ -440,10 +403,20 @@ def train_model_task(feature_paths: Dict[str, str], tracking_uri: str) -> Dict[s
         preprocessor_path = models_dir / "preprocessor.b"
         with open(preprocessor_path, "wb") as f_out:
             pickle.dump(dv, f_out)
-        mlflow.log_artifact(str(preprocessor_path), artifact_path="preprocessor")
         
-        # Log model
-        mlflow.xgboost.log_model(booster, artifact_path="models_mlflow")
+        # Log artifacts with error handling
+        try:
+            mlflow.log_artifact(str(preprocessor_path), artifact_path="preprocessor")
+            logger.info("✅ Preprocessor artifact logged successfully")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to log preprocessor artifact: {e}")
+        
+        # Log model with error handling  
+        try:
+            mlflow.xgboost.log_model(booster, artifact_path="models_mlflow")
+            logger.info("✅ Model logged successfully")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to log model: {e}")
         
         # Get run ID
         run_id = run.info.run_id
@@ -567,7 +540,7 @@ def cleanup_task():
     logger.info(f"Cleaned up {cleaned_files} temporary files")
 
 @flow(name="ML Pipeline with Prefect")
-def ml_pipeline_flow(year: int = None, month: int = None, tracking_server_host: str = None, aws_profile: str = None):
+def ml_pipeline_flow(year: Optional[int] = None, month: Optional[int] = None, tracking_server_host: Optional[str] = None, aws_profile: Optional[str] = None):
     """
     Main ML pipeline flow
     
@@ -693,7 +666,14 @@ if __name__ == "__main__":
     
     if testing:
         # Use configuration defaults for testing
-        result = ml_pipeline_flow()
+        config_manager = get_config()
+        config = config_manager.get_config()
+        result = ml_pipeline_flow(
+            year=config.get('data', {}).get('year'),
+            month=config.get('data', {}).get('month'),
+            tracking_server_host=config.get('mlflow', {}).get('tracking_server_host'),
+            aws_profile=config.get('mlflow', {}).get('aws_profile')
+        )
         print(f"MLflow run_id: {result['run_id']}")
     else:
         # Use command line arguments for production

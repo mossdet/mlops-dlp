@@ -277,27 +277,42 @@ Interactive notebook version for experimentation and learning.
 ## 🚀 Quick Start
 
 ### Option 1: Interactive Menu (Recommended)
+
+**Method 1: Direct execution**
 ```bash
 cd week03
 ./run_examples.sh
-
-# The interactive menu will show:
-# - Alignment status for each script (✅ Fully Aligned)
-# - Configuration details (MLflow server, AWS profile, etc.)
-# - Component testing options
-# - Enhanced cleanup and management tools
 ```
+
+**Method 2: Using bash explicitly**
+```bash
+cd week03
+bash run_examples.sh
+```
+
+**Method 3: Make executable first (if needed)**
+```bash
+cd week03
+chmod +x run_examples.sh
+./run_examples.sh
+```
+
+The interactive menu will show:
+- Alignment status for each script (✅ Fully Aligned)
+- Configuration details (MLflow server, AWS profile, etc.)
+- Component testing options
+- Enhanced cleanup and management tools
 
 ### Option 2: Direct Execution
 ```bash
 # All scripts now use consistent defaults (year=2021, month=1)
-python simple_pipeline.py       # ✅ FULLY ALIGNED - RMSE ~6.60
-python airflow_pipeline.py      # ✅ FULLY ALIGNED - RMSE ~6.60  
-python prefect_pipeline.py      # ✅ FULLY ALIGNED - RMSE ~6.60
-python make_pipeline.py         # ✅ FULLY ALIGNED - RMSE ~6.60
+uv run python simple_pipeline.py       # ✅ FULLY ALIGNED - RMSE ~6.60
+uv run python airflow_pipeline.py      # ✅ FULLY ALIGNED - RMSE ~6.60  
+uv run python prefect_pipeline.py      # ✅ FULLY ALIGNED - RMSE ~6.60
+uv run python make_pipeline.py         # ✅ FULLY ALIGNED - RMSE ~6.60
 
 # All scripts support command-line arguments:
-python simple_pipeline.py --year 2021 --month 1 --tracking-server-host ec2-18-223-115-201.us-east-2.compute.amazonaws.com --aws-profile mlops_zc
+uv run python simple_pipeline.py --year 2021 --month 1 --tracking-server-host ec2-18-223-115-201.us-east-2.compute.amazonaws.com --aws-profile mlops_zc
 
 # Expected output for ALL scripts:
 # Training features shape: (73908, 13221)
@@ -309,13 +324,13 @@ python simple_pipeline.py --year 2021 --month 1 --tracking-server-host ec2-18-22
 ### Option 3: Advanced Usage
 ```bash
 # Use make-like approach for dependency management
-python make_pipeline.py deploy --year 2021 --month 1
+uv run python make_pipeline.py deploy --year 2021 --month 1
 
 # Force rebuild everything
-python make_pipeline.py deploy --force
+uv run python make_pipeline.py deploy --force
 
 # List available tasks
-python make_pipeline.py --list
+uv run python make_pipeline.py --list
 
 # Test individual components
 ./run_examples.sh  # Choose option 9 for component testing
