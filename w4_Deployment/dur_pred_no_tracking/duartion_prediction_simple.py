@@ -95,7 +95,7 @@ def train_model(X_train, y_train, X_val, y_val, dv):
         pickle.dump(dv, f_out)
 
     # save model
-    model_path = models_dir/"booster"
+    model_path = models_dir/"booster.json"
     booster.save_model(str(model_path))
 
     # load saved model
