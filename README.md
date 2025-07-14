@@ -4,12 +4,12 @@ This repository contains an MLOps learning project showcasing the essential comp
 
 ## 📚 Table of Contents
 
-1. [Setup EC2 Development Environment](/week01/)
-2. [Experiment Tracking](/week02/)
-3. [Orchestration](/week03/)
-4. [Deployment](/week04/)
+1. [Setup EC2 Development Environment](#01-setup-development-environment)
+2. [Experiment Tracking](#02-experiment-tracking)
+3. [Orchestration](#03-orchestration)
+4. [Deployment](#04-deployment)
 
-## [1. Setup EC2 Development Environment](/week01/) <a name="01-setup-development-environment"></a>
+## [1. Setup EC2 Development Environment](/w1_Setup_Cloud_Environment/) <a name="01-setup-development-environment"></a>
 
 This section covers setting up a cloud-based development environment for MLOps practices.
 
@@ -38,7 +38,7 @@ mlflow ui --backend-store-uri sqlite:///mlflow/mlflow.db
 sar -u 5
 ```
 
-## [2. Experiment Tracking](/week02/) <a name="02-experiment-tracking"></a>
+## [2. Experiment Tracking](#02-experiment-tracking) <a name="02-experiment-tracking"></a>
 
 Learn how to track and manage machine learning experiments using MLflow and other tools.
 
@@ -50,7 +50,7 @@ Learn how to track and manage machine learning experiments using MLflow and othe
 - Model versioning and registry
 - Comparing experiment results
 
-## [3. Orchestrating ML Pipelines](/week03/) <a name="03-orchestration"></a>
+## [3. Orchestrating ML Pipelines](#03-orchestration) <a name="03-orchestration"></a>
 
 Explore workflow orchestration and pipeline management for machine learning projects.
 
@@ -60,7 +60,7 @@ Explore workflow orchestration and pipeline management for machine learning proj
 - Data pipeline automation
 - Monitoring and error handling
 
-## [4. Deploying ML Models](/week04/) <a name="04-deployment"></a>
+## [4. Deploying ML Models](#04-deployment) <a name="04-deployment"></a>
 
 Learn various deployment strategies and patterns for machine learning models in production.
 
@@ -95,13 +95,13 @@ graph TD
 
 ```
 mlops-dlp/
-├── week01/              # Development environment setup
-├── week02/              # Experiment tracking with MLflow
-├── week03/              # ML pipeline orchestration
-├── week04/              # Model deployment strategies
-├── Visual_Summaries/    # Visual learning aids
-├── mlflow/              # MLflow artifacts and database
-└── README.md           # This file
+├── w1_Setup_Cloud_Environment/     # Development environment setup
+├── w2_Experiment_Tracking/         # Experiment tracking with MLflow
+├── w3_Orchestration/               # ML pipeline orchestration
+├── w4_Deployment/                  # Model deployment strategies
+├── Visual_Summaries/               # Visual learning aids
+├── mlflow/                         # MLflow artifacts and database
+└── README.md                       # This file
 ```
 
 ## 🛠️ Technologies Used
