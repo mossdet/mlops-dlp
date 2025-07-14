@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# This script is a simplified version of the duration prediction model
+# It does not include tracking or orchestration features, focusing solely on model training and saving.
+# It facilitates generating a model that can be used for deployment in a Flask application.
+
 # Standard library
 import os
 import pickle
@@ -10,23 +14,14 @@ from pathlib import Path
 # Third-party libraries
 import pandas as pd
 import xgboost as xgb
-import mlflow
 from pathlib import Path
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import root_mean_squared_error
 
-# Set up environment variables for AWS credentials and MLflow tracking server running on an EC2 instance
-# The public DNS of the EC2 instance must be updated after restarting the instance
-os.environ["AWS_PROFILE"] = "mlops_zc" # fill in with your AWS profile. (generate with command: aws configure --profile mlops_zc)
-TRACKING_SERVER_HOST = "ec2-18-223-115-201.us-east-2.compute.amazonaws.com" # fill in with the public DNS of the EC2 instance
-mlflow_experiment_name = "nyc-taxi-experiment"
-
-# Set the MLflow tracking URI
-mlflow.set_tracking_uri(f"http://{TRACKING_SERVER_HOST}:5000")
-mlflow.set_experiment(mlflow_experiment_name)
-
-models_dir=Path('/home/ubuntu/mlops-dlp/w3_Orchestration/mlflow/models/')
-images_dir=Path('/home/ubuntu/mlops-dlp/w3_Orchestration/mlflow/images/')
+# Set up directories for models and images
+# These directories will be used to save the preprocessor and model files
+models_dir=Path('/home/ubuntu/mlops-dlp/w4_Deployment/dur_pred_no_tracking/models/')
+images_dir=Path('/home/ubuntu/mlops-dlp/w4_Deployment/dur_pred_no_tracking/images/')
 models_dir.mkdir(parents=True, exist_ok=True)
 images_dir.mkdir(parents=True, exist_ok=True)
 
@@ -63,42 +58,43 @@ def create_X(df, dv=None):
 
 
 def train_model(X_train, y_train, X_val, y_val, dv):
-    with mlflow.start_run() as run:
-        train = xgb.DMatrix(X_train, label=y_train)
-        valid = xgb.DMatrix(X_val, label=y_val)
+    train = xgb.DMatrix(X_train, label=y_train)
+    valid = xgb.DMatrix(X_val, label=y_val)
 
-        best_params = {
-            'learning_rate': 0.09585355369315604,
-            'max_depth': 30,
-            'min_child_weight': 1.060597050922164,
-            'objective': 'reg:squarederror',
-            'reg_alpha': 0.018060244040060163,
-            'reg_lambda': 0.011658731377413597,
-            'seed': 42
-        }
+    best_params = {
+        'learning_rate': 0.09585355369315604,
+        'max_depth': 30,
+        'min_child_weight': 1.060597050922164,
+        'objective': 'reg:squarederror',
+        'reg_alpha': 0.018060244040060163,
+        'reg_lambda': 0.011658731377413597,
+        'seed': 42
+    }
 
-        mlflow.log_params(best_params)
+    booster = xgb.train(
+        params=best_params,
+        dtrain=train,
+        num_boost_round=30,
+        evals=[(valid, 'validation')],
+        early_stopping_rounds=50
+    )
 
-        booster = xgb.train(
-            params=best_params,
-            dtrain=train,
-            num_boost_round=30,
-            evals=[(valid, 'validation')],
-            early_stopping_rounds=50
-        )
+    y_pred = booster.predict(valid)
+    rmse = root_mean_squared_error(y_val, y_pred)
 
-        y_pred = booster.predict(valid)
-        rmse = root_mean_squared_error(y_val, y_pred)
-        mlflow.log_metric("rmse", rmse)
+    # save preprocessor
+    preprocessor_path = models_dir/"preprocessor.b"
+    with open(preprocessor_path, "wb") as f_out:
+        pickle.dump(dv, f_out)
 
-        preprocessor_path = models_dir/"preprocessor.b"
-        with open(preprocessor_path, "wb") as f_out:
-            pickle.dump(dv, f_out)
-        mlflow.log_artifact(preprocessor_path, artifact_path="preprocessor")
+    # save model
+    model_path = models_dir/"booster"
+    booster.save_model(str(model_path))
 
-        mlflow.xgboost.log_model(booster, artifact_path="models_mlflow")
-
-        return run.info.run_id
+    # load saved model
+    booster_loaded = xgb.Booster()
+    booster_loaded.load_model(str(model_path))
+    return 0
 
 
 def run(year, month):
@@ -116,7 +112,6 @@ def run(year, month):
     y_val = df_val[target].values
 
     run_id = train_model(X_train, y_train, X_val, y_val, dv)
-    print(f"MLflow run_id: {run_id}")
     return run_id
 
 
@@ -136,8 +131,3 @@ if __name__ == "__main__":
         args = parser.parse_args()
 
         run_id = run(year=args.year, month=args.month)
-
-    run_id_fpath = Path(os.path.dirname(os.path.abspath(__file__))) / "run_id.txt"
-    run_id_fpath.parent.mkdir(parents=True, exist_ok=True)
-    with open(run_id_fpath, "w") as f:
-        f.write(run_id)

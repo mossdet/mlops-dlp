@@ -205,7 +205,7 @@ COPY
 ```
 - Build docker container:
 ```bash
-docker build -t docker_example01 week04/Docker_examples/
+docker build -t docker_example01 w4_Deployment/Docker_examples/
 ```
 - Run docker container:
 ```bash

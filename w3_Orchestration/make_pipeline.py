@@ -183,7 +183,7 @@ if 'paths' not in CONFIG:
         'targets_val': f"{CONFIG['artifacts']['data_dir']}/targets_val.pkl",
         'vectorizer': f"{CONFIG['artifacts']['data_dir']}/vectorizer.pkl",
         'model_metadata': f"{CONFIG['artifacts']['models_dir']}/latest_metadata.json",
-        'run_id_file': '/home/ubuntu/mlops-dlp/week03/run_id.txt'
+        'run_id_file': '/home/ubuntu/mlops-dlp/w3_Orchestration/run_id.txt'
     }
 
 if 'cache_dir' not in CONFIG:
@@ -523,7 +523,7 @@ def main():
             'targets_val': f"{CONFIG['artifacts']['data_dir']}/targets_val.pkl",
             'vectorizer': f"{CONFIG['artifacts']['data_dir']}/vectorizer.pkl",
             'model_metadata': f"{CONFIG['artifacts']['models_dir']}/latest_metadata.json",
-            'run_id_file': '/home/ubuntu/mlops-dlp/week03/run_id.txt'
+            'run_id_file': '/home/ubuntu/mlops-dlp/w3_Orchestration/run_id.txt'
         }
 
     if 'cache_dir' not in CONFIG:

@@ -20,7 +20,7 @@ echo ""
 
 # Check if we're in the right directory
 if [ ! -f "simple_pipeline.py" ]; then
-    echo "❌ Error: Please run this script from the week03 directory"
+    echo "❌ Error: Please run this script from the w3_Orchestration directory"
     exit 1
 fi
 
@@ -181,7 +181,7 @@ show_configuration() {
         echo "   Expected RMSE: ~6.60 (consistent across all implementations)"
         echo ""
         echo "📁 Artifacts:"
-        echo "   Models: /home/ubuntu/mlops-dlp/week03/mlflow/models/"
+        echo "   Models: /home/ubuntu/mlops-dlp/w3_Orchestration/mlflow/models/"
         echo "   Data: /home/ubuntu/mlops-dlp/data/"
         echo "   Run ID: saved to run_id.txt"
     fi

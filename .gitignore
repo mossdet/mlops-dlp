@@ -14,5 +14,5 @@ mlruns/*
 *mlflow_cases*
 *.db
 data/*
-week03/mlflow/
-week03/run_id.txt
+w3_Orchestration/mlflow/
+w3_Orchestration/run_id.txt

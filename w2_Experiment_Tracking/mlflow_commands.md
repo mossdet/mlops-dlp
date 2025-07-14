@@ -1,7 +1,7 @@
 # Start MLflow server
 - Go to the directory where the backend database will be created, e.g.:
 ```bash
-cd ~/mlops-dlp/week02/running-mlflow-examples/mlflow_cases/
+cd ~/mlops-dlp/w2_Experiment_Tracking/running-mlflow-examples/mlflow_cases/
 ```
 
 - Start the mlflow tracking/backend server

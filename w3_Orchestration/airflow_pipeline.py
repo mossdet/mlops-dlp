@@ -261,7 +261,7 @@ def train_model_task(**context):
         mlflow.log_metric("rmse", rmse)
 
         # Save preprocessor (matching reference script)
-        models_dir = Path('/home/ubuntu/mlops-dlp/week03/mlflow/models/')
+        models_dir = Path('/home/ubuntu/mlops-dlp/w3_Orchestration/mlflow/models/')
         models_dir.mkdir(parents=True, exist_ok=True)
         
         preprocessor_path = models_dir / "preprocessor.b"

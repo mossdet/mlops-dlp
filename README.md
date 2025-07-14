@@ -88,7 +88,7 @@ graph TD
 
 ### Quick Setup
 1. Clone this repository
-2. Follow the setup instructions in [Week 1](/week01/)
+2. Follow the setup instructions in [Week 1](/w1_Setup_Cloud_Environment/)
 3. Work through each week sequentially
 
 ## 📁 Project Structure

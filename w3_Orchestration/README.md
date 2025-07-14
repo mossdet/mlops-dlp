@@ -280,19 +280,19 @@ Interactive notebook version for experimentation and learning.
 
 **Method 1: Direct execution**
 ```bash
-cd week03
+cd w3_Orchestration
 ./run_examples.sh
 ```
 
 **Method 2: Using bash explicitly**
 ```bash
-cd week03
+cd w3_Orchestration
 bash run_examples.sh
 ```
 
 **Method 3: Make executable first (if needed)**
 ```bash
-cd week03
+cd w3_Orchestration
 chmod +x run_examples.sh
 ./run_examples.sh
 ```
@@ -452,7 +452,7 @@ graph TD
     "early_stopping_rounds": 50
   },
   "artifacts": {
-    "models_dir": "/home/ubuntu/mlops-dlp/week03/mlflow/models",
+    "models_dir": "/home/ubuntu/mlops-dlp/w3_Orchestration/mlflow/models",
     "data_dir": "/home/ubuntu/mlops-dlp/data"
   }
 }

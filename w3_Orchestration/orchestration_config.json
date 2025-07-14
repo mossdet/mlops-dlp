@@ -23,7 +23,7 @@
     "early_stopping_rounds": 50
   },
   "artifacts": {
-    "models_dir": "/home/ubuntu/mlops-dlp/week03/mlflow/models",
+    "models_dir": "/home/ubuntu/mlops-dlp/w3_Orchestration/mlflow/models",
     "data_dir": "/home/ubuntu/mlops-dlp/data"
   },
   "validation": {

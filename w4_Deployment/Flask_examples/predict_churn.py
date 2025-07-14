@@ -5,8 +5,8 @@ from flask import request
 from flask import jsonify
 
 
-model_file = '/home/ubuntu/mlops-dlp/week04/Flask_examples/model_C=1.0.bin'
-#model_file = '/week04/Flask_examples/model_C=1.0.bin'
+model_file = '/home/ubuntu/mlops-dlp/w4_Deployment/Flask_examples/model_C=1.0.bin'
+#model_file = '/w4_Deployment/Flask_examples/model_C=1.0.bin'
 
 with open(model_file, 'rb') as f_in:
     dv, model = pickle.load(f_in)
