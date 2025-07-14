@@ -33,5 +33,5 @@ xgboost==3.0.2
     ```
     - Install the required packages, including scikit-learn and xgboost with the specific version we found in the previous step.
     ```bash
-        uv pip install scikit-learn==1.7.0 xgboost==3.0.2
+        uv pip install scikit-learn==1.7.0 xgboost==3.0.2 flask numpy pandas
     ```
