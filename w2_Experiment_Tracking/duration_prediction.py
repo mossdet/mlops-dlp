@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+"""
+Duration Prediction with Experiment Tracking
+
+ML pipeline for NYC taxi trip duration prediction with MLflow experiment tracking.
+
+Author: Daniel Lachner-Piza
+Email: dalapiz@proton.me
+"""
+
 import pickle
 import seaborn as sns
 import matplotlib.pyplot as plt

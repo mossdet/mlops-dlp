@@ -1,9 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# This script is a simplified version of the duration prediction model
-# It does not include tracking or orchestration features, focusing solely on model training and saving.
-# It facilitates generating a model that can be used for deployment in a Flask application.
+"""
+Simplified Duration Prediction Model
+
+This script is a simplified version of the duration prediction model.
+It does not include tracking or orchestration features, focusing solely on model training and saving.
+It facilitates generating a model that can be used for deployment in a Flask application.
+
+Author: Daniel Lachner-Piza
+Email: dalapiz@proton.me
+"""
 
 # Standard library
 import os

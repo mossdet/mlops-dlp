@@ -4,6 +4,9 @@ Make.py - Simple Make-like Task Runner for ML Pipelines
 
 This script provides a simple task runner similar to GNU Make,
 allowing you to define and execute ML pipeline tasks with dependencies.
+
+Author: Daniel Lachner-Piza
+Email: dalapiz@proton.me
 """
 
 import os

@@ -1,4 +1,14 @@
-# SImple example using flask
+#!/usr/bin/env python
+"""
+Flask Docker Example
+
+Simple example using Flask for containerized ML model deployment.
+
+Author: Daniel Lachner-Piza
+Email: dalapiz@proton.me
+"""
+
+# Simple example using flask
 from flask import Flask, jsonify, request
 import time
 import random

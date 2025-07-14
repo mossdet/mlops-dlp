@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+"""
+Duration Prediction ML Pipeline
+
+Standard duration prediction pipeline for NYC taxi trip data.
+
+Author: Daniel Lachner-Piza
+Email: dalapiz@proton.me
+"""
+
 # Standard library
 import os
 import pickle

@@ -4,6 +4,9 @@ Simple ML Pipeline Orchestration Example
 
 This script demonstrates a basic ML pipeline orchestration approach
 without external orchestration tools, showing the fundamental concepts.
+
+Author: Daniel Lachner-Piza
+Email: dalapiz@proton.me
 """
 
 import os

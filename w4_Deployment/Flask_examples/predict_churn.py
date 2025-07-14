@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+"""
+Churn Prediction Flask Service
+
+Flask web service for customer churn prediction.
+
+Author: Daniel Lachner-Piza
+Email: dalapiz@proton.me
+"""
+
 import pickle
 
 from flask import Flask

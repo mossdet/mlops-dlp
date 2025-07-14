@@ -4,6 +4,9 @@ Apache Airflow DAG Example for ML Pipeline Orchestration
 
 This script demonstrates how to create an Airflow DAG for orchestrating
 ML workflows with proper task dependencies and error handling.
+
+Author: Daniel Lachner-Piza
+Email: dalapiz@proton.me
 """
 
 from datetime import datetime, timedelta

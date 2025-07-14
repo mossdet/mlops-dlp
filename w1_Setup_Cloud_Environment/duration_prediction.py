@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+"""
+Duration Prediction - Basic Implementation
+
+Basic implementation of NYC taxi trip duration prediction for learning purposes.
+
+Author: Daniel Lachner-Piza
+Email: dalapiz@proton.me
+"""
+
 import pickle
 import seaborn as sns
 import matplotlib.pyplot as plt

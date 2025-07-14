@@ -1,9 +1,12 @@
 [project]
 name = "mlops-dlp"
 version = "0.1.0"
-description = "Add your description here"
+description = "MLOps Learning Project - End-to-end machine learning deployment and management"
 readme = "README.md"
 requires-python = ">=3.12"
+authors = [
+    {name = "Daniel Lachner-Piza", email = "dalapiz@proton.me"}
+]
 dependencies = [
     "boto3>=1.39.2",
     "graphviz>=0.21",

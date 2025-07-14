@@ -4,6 +4,9 @@ Prefect Workflow Example for ML Pipeline Orchestration
 
 This script demonstrates how to create a Prefect workflow for orchestrating
 ML pipelines with better error handling, retries, and observability.
+
+Author: Daniel Lachner-Piza
+Email: dalapiz@proton.me
 """
 import time
 import pickle

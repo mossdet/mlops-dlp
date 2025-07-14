@@ -5,6 +5,9 @@ Centralized Configuration for Week 3 Orchestration Examples
 This module provides centralized configuration management for all orchestration scripts.
 All MLflow tracking server settings, AWS profiles, and other shared configurations
 are managed here to ensure consistency across examples.
+
+Author: Daniel Lachner-Piza
+Email: dalapiz@proton.me
 """
 
 import os

@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+"""
+MLflow Model Registry Management
+
+This script demonstrates model registry operations with MLflow including
+model versioning, staging, and lifecycle management.
+
+Author: Daniel Lachner-Piza
+Email: dalapiz@proton.me
+"""
+
 import time
 import os
 import mlflow
