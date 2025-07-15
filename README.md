@@ -79,18 +79,6 @@ graph TD
 - Deployment strategies (Blue/Green, Canary, etc.)
 - Monitoring and maintenance
 
-## 🚀 Getting Started
-
-### Prerequisites
-- AWS Account with EC2 access
-- Basic understanding of Python and machine learning
-- Familiarity with command line tools
-
-### Quick Setup
-1. Clone this repository
-2. Follow the setup instructions in [Week 1](/w1_Setup_Cloud_Environment/)
-3. Work through each week sequentially
-
 ## 📁 Project Structure
 
 ```
