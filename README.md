@@ -38,7 +38,7 @@ mlflow ui --backend-store-uri sqlite:///mlflow/mlflow.db
 sar -u 5
 ```
 
-## [2. Experiment Tracking](#02-experiment-tracking) <a name="02-experiment-tracking"></a>
+## [2. Experiment Tracking](/w2_Experiment_Tracking/) <a name="02-experiment-tracking"></a>
 
 Learn how to track and manage machine learning experiments using MLflow and other tools.
 
@@ -50,7 +50,7 @@ Learn how to track and manage machine learning experiments using MLflow and othe
 - Model versioning and registry
 - Comparing experiment results
 
-## [3. Orchestrating ML Pipelines](#03-orchestration) <a name="03-orchestration"></a>
+## [3. Orchestrating ML Pipelines](/w3_Orchestration/) <a name="03-orchestration"></a>
 
 Explore workflow orchestration and pipeline management for machine learning projects.
 
@@ -60,7 +60,7 @@ Explore workflow orchestration and pipeline management for machine learning proj
 - Data pipeline automation
 - Monitoring and error handling
 
-## [4. Deploying ML Models](#04-deployment) <a name="04-deployment"></a>
+## [4. Deploying ML Models](/w4_Deployment/) <a name="04-deployment"></a>
 
 Learn various deployment strategies and patterns for machine learning models in production.
 
