@@ -3,14 +3,16 @@ import os
 import pickle
 import argparse
 from pathlib import Path
+
 # Third-party libraries
 import pandas as pd
 import xgboost as xgb
-from pathlib import Path
 from sklearn.feature_extraction import DictVectorizer
 from flask import Flask, request, jsonify
 
-models_dir=Path('/home/ubuntu/mlops-dlp/w4_Deployment/dur_pred_no_tracking/models/')
+# Get script path and set models directory relative to it
+script_path = Path(__file__).parent
+models_dir = script_path / 'models'
 
 def load_preprocessor_and_model(models_dir):
     """
@@ -40,7 +42,7 @@ def prepare_features(ride):
     features['trip_distance'] = ride['trip_distance']
     return features
 
-def predict(features):
+def predict(dv, model, features):
     """
     Predict the taxi ride duration using the loaded model and features.
     Args:
@@ -50,9 +52,6 @@ def predict(features):
     Returns:
         prediction: The predicted duration of the taxi ride.
     """
-
-    # Load preprocessor and model
-    dv, model = load_preprocessor_and_model(models_dir)
 
     # Transform features using the DictVectorizer
     X = dv.transform(features)
@@ -64,6 +63,8 @@ def predict(features):
     # Return the predicted duration
     return float(preds[0])
 
+# Load preprocessor and model
+dv, model = load_preprocessor_and_model(models_dir)
 
 app = Flask('taxi_duration_prediction')
 @app.route('/predict', methods=['POST'])
@@ -74,7 +75,7 @@ def predict_endpoint():
 
     ride = request.get_json()
     features = prepare_features(ride)
-    prediction = predict(features)
+    prediction = predict(dv, model, features)
     result = {
         'duration': float(prediction)
     }
