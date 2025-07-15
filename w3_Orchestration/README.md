@@ -3,40 +3,9 @@
 
 This directory contains comprehensive examples of ML pipeline orchestration approaches, from simple to enterprise-grade solutions. Each example demonstrates different patterns and tools used in the MLOps industry for managing complex machine learning workflows.
 
-> **🎯 Learning Goal**: Master different approaches to ML pipeline orchestration, understand trade-offs between tools, and gain hands-on experience with production-ready workflow management.
-
-> **✅ ALL EXAMPLES FULLY ALIGNED**: Every orchestration script is now **completely aligned** with the reference `duration-prediction.py` script for consistency in feature engineering, model training, MLflow tracking, and artifact management. **Expected performance: RMSE ~6.60 across all implementations.**
-
-## 📋 Quick Summary
-
-| Script | Approach | Complexity | Alignment Status | Expected RMSE | Best For |
-|--------|----------|------------|------------------|---------------|----------|
-| `simple_pipeline.py` | Class-based | Low | ✅ **FULLY ALIGNED** | **~6.60** | Learning fundamentals |
-| `airflow_pipeline.py` | DAG-based | High | ✅ **FULLY ALIGNED** | **~6.60** | Production workflows |
-| `prefect_pipeline.py` | Flow-based | Medium | ✅ **FULLY ALIGNED** | **~6.60** | Modern development |
-| `make_pipeline.py` | Dependency-based | Low | ✅ **FULLY ALIGNED** | **~6.60** | Incremental builds |
-| `run_examples.sh` | Interactive | Very Low | ✅ **ENHANCED** | N/A | Getting started |
-
 ## 🔗 Reference Alignment Features
 
-**ALL orchestration scripts now implement IDENTICAL logic to `duration-prediction.py`:**
-
-- **✅ Feature Engineering**: Uses only `PU_DO` as categorical feature (not separate PULocationID/DOLocationID)
-- **✅ DictVectorizer**: Configured with `sparse=True` for memory efficiency  
-- **✅ Validation Strategy**: Uses next month's data for validation (proper train/val split)
-- **✅ XGBoost Implementation**: Uses native `DMatrix` and `xgb.train()` API (not XGBRegressor)
-- **✅ Hyperparameters**: Uses optimized parameters from reference script's `best_params`
-- **✅ MLflow Integration**: EC2 server tracking with proper AWS authentication
-- **✅ Artifact Management**: Saves preprocessor and logs artifacts identically to reference
-- **✅ Run ID Management**: Saves run_id to file for downstream processing
-- **✅ Performance Consistency**: **RMSE ~6.60 across ALL implementations**
-
-**🎯 Key Achievement: Perfect alignment means you can switch between orchestration tools while maintaining identical ML pipeline behavior and performance.**
-
 ## 📚 Table of Contents
-- [Reference Alignment Features](#-reference-alignment-features)
-- [Quick Summary](#-quick-summary)
-- [Overview](#-overview)
 - [Files Overview](#-files-overview)
 - [Quick Start](#-quick-start)
 - [Setup Instructions](#️-setup-instructions)
@@ -54,16 +23,6 @@ This directory contains comprehensive examples of ML pipeline orchestration appr
 - [Completion Checklist](#-completion-checklist)
 - [Pro Tips](#-pro-tips)
 
-## 🎯 Overview
-
-Pipeline orchestration is crucial for managing the complexity of ML workflows in production. This week covers:
-
-- **Task Dependencies**: How to manage execution order and data flow
-- **Error Handling**: Robust error recovery and retry mechanisms  
-- **Scalability**: Approaches that scale from prototype to production
-- **Monitoring**: Observability and debugging capabilities
-- **Artifact Management**: Handling data, models, and intermediate results
-- **Reference Alignment**: Ensuring all scripts are fully aligned with the reference implementation for consistency in feature engineering, model training, and MLflow tracking.
 
 ## 📁 Files Overview
 
@@ -91,16 +50,6 @@ python simple_pipeline.py
 # Run with command line arguments (set testing=False in script)
 python simple_pipeline.py --year=2021 --month=1
 ```
-
-**Key Achievements:**
-- **Perfect Alignment**: Uses only `PU_DO` as categorical feature (not separate PULocationID/DOLocationID)  
-- **Memory Efficiency**: DictVectorizer with `sparse=True` for optimal memory usage
-- **Proper Validation**: Validation on next month's data (proper train/val split)
-- **Native XGBoost**: XGBoost native training API with DMatrix objects
-- **Optimized Parameters**: Model parameters match reference script's optimized hyperparameters
-- **EC2 Integration**: MLflow server integration with AWS profile support
-- **Artifact Consistency**: Proper artifact logging and preprocessor saving identical to reference
-- **Performance**: **RMSE ~6.60 - identical to reference script**
 
 ### 2. `airflow_pipeline.py` - Apache Airflow DAG
 Professional-grade workflow orchestration using Apache Airflow, **FULLY ALIGNED** with the reference script.
@@ -136,14 +85,6 @@ uv pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_U
 airflow version
 ```
 
-
-**Perfect Alignment Achievements:**
-- **Feature Engineering**: Only `PU_DO` as categorical feature
-- **Native XGBoost**: Uses `DMatrix` and `xgb.train()` API
-- **Validation Strategy**: Next month data for proper validation
-- **EC2 Integration**: MLflow tracking with EC2 server
-- **Performance**: **RMSE ~6.60 - identical to reference script**
-
 ### 3. `prefect_pipeline.py` - Prefect Workflow
 Modern workflow orchestration with Prefect 2.0, **FULLY ALIGNED** with the reference `duration-prediction.py` script.
 
@@ -174,16 +115,6 @@ python prefect_pipeline.py
 # Or deploy to Prefect server
 # prefect deployment build-from-flow prefect_pipeline.py:ml_pipeline_flow
 ```
-
-**Perfect Alignment Achievements:**
-- **Feature Engineering**: Uses only `PU_DO` as categorical feature (not separate PULocationID/DOLocationID)  
-- **Memory Efficiency**: DictVectorizer with `sparse=True` for optimal performance
-- **Proper Validation**: Validation on next month's data (proper train/val split)
-- **Native XGBoost**: XGBoost native training API with DMatrix objects
-- **Optimized Parameters**: Model parameters match reference script's optimized hyperparameters
-- **Artifact Consistency**: Proper artifact logging and preprocessor saving
-- **Run ID Management**: Saves run_id to file for downstream processing
-- **Performance**: **RMSE ~6.60 - identical to reference script**
 
 ### 4. `make_pipeline.py` - Make-like Task Runner
 Simple dependency-based task runner inspired by GNU Make, **FULLY ALIGNED** with the reference script.
@@ -216,13 +147,6 @@ python make_pipeline.py --clean
 python make_pipeline.py deploy --year 2021 --month 1 --tracking-server-host ec2-18-223-115-201.us-east-2.compute.amazonaws.com
 ```
 
-**Perfect Alignment Achievements:**
-- **EC2 MLflow Integration**: Full EC2 server integration with AWS authentication
-- **Feature Engineering**: Only `PU_DO` as categorical feature  
-- **XGBoost Native API**: Uses `DMatrix` and `xgb.train()` for consistency
-- **Optimized Parameters**: Hyperparameters match reference script exactly
-- **Performance**: **RMSE ~6.60 - identical to reference script**
-
 ### 5. `run_examples.sh` - Interactive Runner
 **Enhanced** bash script that provides an interactive menu to run and manage all examples.
 
@@ -254,15 +178,6 @@ chmod +x run_examples.sh
 # 0) Exit
 ```
 
-**Enhanced Features Added:**
-- ✅ **FULL ALIGNMENT** status indicators for each script
-- ✅ **Performance indicators**: Shows expected RMSE ~6.60
-- ✅ Enhanced cleanup with selective file removal
-- ✅ Configuration display showing MLflow server and model settings
-- ✅ Component testing for environment validation
-- ✅ Improved error reporting and status tracking
-- ✅ Consistent performance reporting across all examples
-
 ### 6. `duration-prediction.py` - Original Implementation
 The original ML pipeline implementation used as a baseline for comparison.
 
@@ -273,6 +188,7 @@ The original ML pipeline implementation used as a baseline for comparison.
 
 ### 7. `duration-prediction.ipynb` - Jupyter Notebook
 Interactive notebook version for experimentation and learning.
+
 
 ## 🚀 Quick Start
 
@@ -336,31 +252,6 @@ uv run python make_pipeline.py --list
 ./run_examples.sh  # Choose option 9 for component testing
 ```
 
-## �️ Setup Instructions
-
-### Prerequisites
-```bash
-# Core requirements (already installed in the environment)
-pip install pandas xgboost scikit-learn mlflow
-
-# Optional for enhanced examples
-pip install apache-airflow==2.7.0  # For Airflow example
-pip install prefect==2.14.0        # For Prefect example
-```
-
-### Environment Setup
-```bash
-# Ensure MLflow directory exists
-mkdir -p /home/ubuntu/mlops-dlp/mlflow/models
-mkdir -p /home/ubuntu/mlops-dlp/data
-
-# Set permissions for run script
-chmod +x run_examples.sh
-
-# Verify Python environment
-python --version  # Should be 3.8+
-```
-
 ##  📊 Feature Comparison
 
 | Feature | Simple | Airflow | Prefect | Make-like | Interactive |
@@ -383,47 +274,11 @@ python --version  # Should be 3.8+
 | **Expected RMSE** | ✅ **~6.60** | ✅ **~6.60** | ✅ **~6.60** | ✅ **~6.60** | N/A |
 | **Performance Consistency** | ✅ **Identical** | ✅ **Identical** | ✅ **Identical** | ✅ **Identical** | N/A |
 
-##  Pipeline Architecture
-
-All examples implement the same ML pipeline with these steps:
-
-```mermaid
-graph TD
-    A[Extract Training Data] --> B[Extract Validation Data]
-    A --> C[Validate Data Quality]
-    C --> D[Transform Training Data]
-    B --> E[Transform Validation Data]
-    D --> F[Prepare Features]
-    E --> F
-    F --> G[Train Model with Validation]
-    G --> H[Validate Model Quality]
-    H --> I[Save Artifacts]
-    I --> J[Save Run ID]
-    J --> K[Cleanup]
-    
-    style A fill:#e1f5fe
-    style G fill:#f3e5f5
-    style I fill:#e8f5e8
-```
-
-### Step Details:
-
-1. **Extract Training Data** - Download raw NYC taxi data for training month
-2. **Extract Validation Data** - Download next month's data for validation (Prefect)
-3. **Validate** - Check data quality and completeness 
-4. **Transform** - Clean outliers, calculate trip duration, feature engineering
-5. **Features** - Create feature vectors using DictVectorizer (sparse=True for Prefect)
-6. **Train** - Train XGBoost model with validation data and MLflow tracking
-7. **Validate Model** - Check model performance against quality thresholds
-8. **Save Artifacts** - Store model artifacts, preprocessor, and metadata
-9. **Save Run ID** - Write run ID to file for downstream processing
-10. **Cleanup** - Remove temporary files and cache
 
 ## 🔧 Configuration
 
 ### 🎯 Centralized Configuration Management
-
-**NEW**: All orchestration scripts now use a **centralized configuration system** via `config.py` for consistent settings across all examples.
+All orchestration scripts use a **centralized configuration system** via `config.py` for consistent settings across all examples.
 
 #### Configuration File: `orchestration_config.json`
 ```json
@@ -497,55 +352,6 @@ python prefect_pipeline.py --year 2021 --month 2 --tracking-server-host custom-s
 python make_pipeline.py --year 2021 --month 2 --tracking-server-host custom-server.com --aws-profile custom-profile
 ```
 
-#### Benefits of Centralized Configuration
-
-- **🔄 Consistency**: All scripts use identical settings automatically
-- **⚙️ Easy Updates**: Change settings once, apply everywhere
-- **🛡️ Version Control**: Configuration stored in JSON for easy tracking
-- **🔧 Flexibility**: Override settings per script run when needed
-- **📊 Transparency**: Clear visibility into current settings
-
-### Script-Specific Configuration
-
-Each script automatically gets a customized experiment name:
-- `simple_pipeline.py` → `nyc-taxi-experiment-simple`
-- `airflow_pipeline.py` → `nyc-taxi-experiment-airflow`  
-- `prefect_pipeline.py` → `nyc-taxi-experiment-prefect`
-- `make_pipeline.py` → `nyc-taxi-experiment-make`
-
-### Customization
-You can modify the configuration to:
-- Change data source (year/month) - defaults to 2021/1 to match reference script
-- Adjust model hyperparameters (optimized values included)
-- Update MLflow tracking server host and AWS profile
-- Modify file paths and experiment names
-- Switch between testing and production modes
-
-## 🎯 Learning Objectives
-
-By completing these orchestration examples, you will learn:
-
-### Core Concepts
-- **Pipeline Design**: How to break complex ML workflows into manageable tasks
-- **Dependency Management**: Understanding task execution order and data flow
-- **Error Handling**: Building robust pipelines that can recover from failures
-- **State Management**: How to pass data between pipeline steps
-- **Artifact Management**: Organizing and versioning data, models, and metadata
-
-### Practical Skills
-- **Tool Comparison**: Hands-on experience with different orchestration approaches
-- **Production Patterns**: Understanding enterprise-grade pipeline design
-- **Debugging Techniques**: How to troubleshoot pipeline failures
-- **Performance Optimization**: Making pipelines faster and more efficient
-- **Monitoring Setup**: Implementing observability in ML workflows
-
-### Industry Best Practices
-- **Idempotency**: Designing steps that can be safely re-run
-- **Incremental Processing**: Only processing what has changed
-- **Configuration Management**: Parameterizing pipelines for flexibility
-- **Testing Strategies**: How to test complex pipeline workflows
-- **Documentation**: Maintaining clear pipeline documentation
-
 ## 🏗️ Architecture Patterns
 
 ### 1. Linear Pipeline (Simple)
@@ -580,48 +386,6 @@ def ml_pipeline():
 - **Pros**: Python-native, great debugging, automatic retries
 - **Cons**: Requires Prefect infrastructure
 
-## 🔗 Integration Examples
-
-### With MLflow
-```python
-# All examples integrate with MLflow for:
-- Experiment tracking
-- Model versioning  
-- Artifact storage
-- Metrics logging
-- Parameter management
-```
-
-### With External Systems
-```python
-# Easy to extend for:
-- Database connections (PostgreSQL, MongoDB)
-- Cloud storage (S3, GCS, Azure Blob)
-- Message queues (RabbitMQ, Kafka)
-- Monitoring systems (Prometheus, Grafana)
-- CI/CD pipelines (GitHub Actions, Jenkins)
-```
-
-## 🔍 Next Steps
-
-### Immediate Actions
-1. **Run Examples**: Execute each pipeline type to see differences
-2. **Compare Outputs**: Look at MLflow experiments for each approach
-3. **Modify Parameters**: Try different data periods and model settings
-4. **Break Things**: Intentionally cause failures to see error handling
-
-### Advanced Exploration
-1. **Custom Tasks**: Add new steps like data validation or model testing
-2. **External Data**: Connect to different data sources (APIs, databases)
-3. **Model Variants**: Try different algorithms (Random Forest, Linear Regression)
-4. **Production Deployment**: Set up actual Airflow or Prefect servers
-
-### Real-world Application
-1. **Adapt for Your Data**: Use these patterns with your own datasets
-2. **Scale Up**: Handle larger datasets and more complex models
-3. **Add Monitoring**: Implement comprehensive observability
-4. **Team Collaboration**: Set up shared infrastructure for team use
-
 ## 📚 Additional Resources
 
 ### Documentation
@@ -642,93 +406,7 @@ def ml_pipeline():
 
 ---
 
-## 🎉 Completion Checklist
-
-- [ ] Run `simple_pipeline.py` and understand basic orchestration
-- [ ] Execute `airflow_pipeline.py` to see DAG-based workflow
-- [ ] Try `prefect_pipeline.py` for modern flow orchestration
-- [ ] Use `make_pipeline.py` with different CLI options
-- [ ] Run `./run_examples.sh` for guided experience
-- [ ] Compare MLflow experiments across different approaches
-- [ ] Experiment with custom parameters and configurations
-- [ ] Read through all code examples and documentation
-- [ ] Understand trade-offs between different orchestration tools
-- [ ] Plan how to apply these patterns to your own projects
-
-**🏆 Congratulations!** You've mastered ML pipeline orchestration fundamentals!
-
-## 🚨 Troubleshooting
-
-### Common Issues and Solutions
-
-#### 1. **Import Errors**
-```bash
-# Error: ModuleNotFoundError: No module named 'mlflow'
-pip install mlflow pandas xgboost scikit-learn
-
-# Error: No module named 'airflow'
-pip install apache-airflow==2.7.0
-# Or run without Airflow - scripts have fallback mode
-
-# Error: No module named 'prefect'
-pip install prefect==2.14.0
-# Or run without Prefect - scripts have fallback mode
-```
-
-#### 2. **Permission Errors**
-```bash
-# Error: Permission denied on run_examples.sh
-chmod +x run_examples.sh
-
-# Error: Cannot create directory
-mkdir -p /home/ubuntu/mlops-dlp/mlflow/models
-mkdir -p /home/ubuntu/mlops-dlp/data
-```
-
-#### 3. **MLflow Tracking Issues**
-```bash
-# Error: Connection refused to tracking server
-# Check if EC2 instance is running and accessible
-ping ec2-18-223-115-201.us-east-2.compute.amazonaws.com
-
-# Error: AWS authentication issues
-aws configure --profile mlops_zc
-# Or export AWS_PROFILE=mlops_zc
-
-# Error: Experiment not found
-# Check experiment name in MLflow UI
-# Pipeline will create experiment if it doesn't exist
-
-# Error: Local database issues (for non-Prefect pipelines)
-rm -f /home/ubuntu/mlops-dlp/mlflow/mlflow.db
-# Pipeline will recreate the database
-```
-
-#### 4. **Memory/Disk Space Issues**
-```bash
-# Clean up temporary files
-python make_pipeline.py --clean
-./run_examples.sh  # Option 7: Clean cache
-
-# Check disk space
-df -h /home/ubuntu/mlops-dlp/
-
-# Monitor memory during execution
-python -c "import psutil; print(f'Memory: {psutil.virtual_memory().percent}%')"
-```
-
-#### 5. **Data Download Issues**
-```bash
-# Error: SSL certificate verification failed
-# Check internet connection
-ping d37ci6vzurychx.cloudfront.net
-
-# Error: File not found (404)
-# Try different month/year combination
-python make_pipeline.py deploy --year 2022 --month 12
-```
-
-## 💡 Pro Tips
+## 💡 Tips
 
 ### For First-Time Users
 1. **Start Simple**: Begin with `./run_examples.sh` for a guided experience
@@ -819,23 +497,3 @@ aws configure list-profiles  # Check AWS profiles
 - **Model RMSE**: 5-8 (typical range for trip duration prediction)
 - **Memory Usage**: <2GB peak
 - **Disk Usage**: ~500MB for artifacts
-
-## 🎓 Educational Value
-
-### For Beginners
-1. Start with `simple_pipeline.py` to understand basic concepts
-2. Use `run_examples.sh` for guided experience
-3. Read through code comments and documentation
-4. Experiment with different parameters
-
-### For Intermediate Users
-1. Compare different orchestration approaches
-2. Understand trade-offs between tools
-3. Learn about production deployment patterns
-4. Explore error handling strategies
-
-### For Advanced Users
-1. Adapt patterns for your own projects
-2. Scale approaches for larger datasets
-3. Integrate with existing infrastructure
-4. Contribute improvements to the examples
