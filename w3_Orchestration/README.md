@@ -8,20 +8,12 @@ This directory contains comprehensive examples of ML pipeline orchestration appr
 ## 📚 Table of Contents
 - [Files Overview](#-files-overview)
 - [Quick Start](#-quick-start)
-- [Setup Instructions](#️-setup-instructions)
 - [Feature Comparison](#-feature-comparison)
-- [Pipeline Architecture](#-pipeline-architecture)
 - [Configuration](#-configuration)
-- [Learning Objectives](#-learning-objectives)
 - [Architecture Patterns](#️-architecture-patterns)
-- [Integration Examples](#-integration-examples)
-- [Troubleshooting](#-troubleshooting)
 - [Expected Output](#-expected-output)
-- [Educational Value](#-educational-value)
-- [Next Steps](#-next-steps)
 - [Additional Resources](#-additional-resources)
-- [Completion Checklist](#-completion-checklist)
-- [Pro Tips](#-pro-tips)
+- [Tips](#tips)
 
 
 ## 📁 Files Overview
