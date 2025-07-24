@@ -1,9 +1,20 @@
 #!/usr/bin/env python
 """
-Taxi Duration Prediction Service - Object Oriented Version
+Taxi Duration Prediction Service
 
 This script provides a Flask web service for predicting taxi ride duration
-using XGBoost model and preprocessor in an object-oriented design.
+using XGBoost model and preprocessor.
+
+The class `TaxiDurationPredictor` handles model loading, feature preparation,
+and prediction in an object-oriented manner. 
+
+The `TaxiDurationAPI` class wraps
+the predictor in a Flask application, providing endpoints for prediction and health checks.
+
+To run the service with gunicorn, use:
+gunicorn -w 4 -k uvicorn.workers.UvicornWorker predict_oop
+with the specified model directory.
+
 
 Author: Daniel Lachner-Piza
 Email: dalapiz@proton.me
@@ -146,6 +157,9 @@ class TaxiDurationAPI:
     def __init__(self, models_dir: str, app_name: str = 'taxi_duration_prediction'):
         """
         Initialize the API with predictor and Flask app.
+
+        To run the API, use:
+        gunicorn -w 4 -k uvicorn.workers.UvicornWorker predict_oop:TaxiDurationAPI
         
         Args:
             models_dir (str): Path to model directory
@@ -231,10 +245,14 @@ class TaxiDurationAPI:
 def main():
     """
     Main function to run the application.
+
+    To run with gunicorn, use:
+    gunicorn -w 4 -k uvicorn.workers.UvicornWorker predict_oop:main
+    with the specified model directory.
     """
     # Configuration
-    models_dir = '/home/ubuntu/mlops-dlp/w4_Deployment/dur_pred_no_tracking/models/'
-    
+    models_dir = '/home/ubuntu/mlops-dlp/w4_Deployment/Web_Service_01/models/'
+
     # Create and run API
     api = TaxiDurationAPI(models_dir)
     api.run()
