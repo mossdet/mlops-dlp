@@ -42,5 +42,5 @@ COPY .aws/config /root/.aws/config
 
 # 6. Runtime Configuration
 EXPOSE 9696
-EXPOSE 5000
+#EXPOSE 5000
 ENTRYPOINT [ "gunicorn", "--bind", "0.0.0.0:9696", "predict_and_fetch_from_mlfow:app" ]
