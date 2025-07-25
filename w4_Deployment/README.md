@@ -14,3 +14,23 @@ This section describes the deployment of a web service for ride duration predict
 - **Environment Setup**: The service is set up to run in a Python environment with necessary dependencies.
 
 ![Experiment-Tracking-Visual-Summary](/Visual_Summaries/Deployment_1.png)
+
+```mermaid
+graph LR
+    classDef sub opacity:0
+    classDef note fill:#ffd, stroke:#ccb
+
+    User[👩User]--> |Request Taxi Service| Backend[Backend]
+    Backend--> |"{UserID, PickUp, DropOff, ...}"| Model["Model"]
+    Model--> |"Trip Duration"| Backend
+    Model--> WebService[Webservice]
+    Model--> Streaming[Streaming]
+
+    subgraph subBackendService ["Backend Service "]
+        Backend
+    end
+
+    subgraph subRideDurationService ["Ride Duration <br/> Prediction Service"]
+        Model
+    end
+```
