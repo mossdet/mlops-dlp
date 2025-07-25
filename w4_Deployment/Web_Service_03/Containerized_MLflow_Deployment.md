@@ -130,6 +130,7 @@ docker system prune -a --volumes
 
 
 ## Removing Docker Images
+source:https://www.digitalocean.com/community/tutorials/how-to-remove-docker-images-containers-and-volumes
 Remove one or more specific images
 Use the docker images command with the -a flag to locate the ID of the images you want to remove. This will show you every image, including intermediate image layers. When you’ve located the images you want to delete, you can pass their ID or tag to docker rmi:
 ```bash
