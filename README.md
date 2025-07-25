@@ -64,6 +64,8 @@ Explore workflow orchestration and pipeline management for machine learning proj
 
 Learn various deployment strategies and patterns for machine learning models in production.
 
+![Experiment-Tracking-Visual-Summary](/Visual_Summaries/Deployment_1.png)
+
 ```mermaid
 graph TD
     A[Deployment] --> |Periodic| B[Batch Offline]
