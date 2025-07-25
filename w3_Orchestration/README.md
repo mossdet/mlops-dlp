@@ -4,8 +4,6 @@
 This directory contains examples of ML pipeline orchestration. 
 Each example demonstrates different tools used in MLOps for managing machine learning workflows.
 
-## 🔗 Reference Alignment Features
-
 ## 📚 Table of Contents
 - [Files Overview](#-files-overview)
 - [Quick Start](#-quick-start)
@@ -183,7 +181,6 @@ chmod +x run_examples.sh
 ```
 
 The interactive menu will show:
-- Alignment status for each script (✅ Fully Aligned)
 - Configuration details (MLflow server, AWS profile, etc.)
 - Component testing options
 - Enhanced cleanup and management tools
@@ -235,7 +232,6 @@ uv run python make_pipeline.py --list
 | **Task Dependencies** | Linear | DAG | Flow | DAG | Sequential |
 | **Parallel Execution** | No | Yes | Yes | No | No |
 | **Error Recovery** | Basic | Advanced | Advanced | None | Basic |
-| **Reference Alignment** | ✅ **FULL** | ✅ **FULL** | ✅ **FULL** | ✅ **FULL** | ✅ **Enhanced** |
 | **MLflow Integration** | ✅ **EC2 Server** | ✅ **EC2 Server** | ✅ **EC2 Server** | ✅ **EC2 Server** | Basic |
 | **Feature Engineering** | ✅ **PU_DO Only** | ✅ **PU_DO Only** | ✅ **PU_DO Only** | ✅ **PU_DO Only** | N/A |
 | **XGBoost Implementation** | ✅ **Native API** | ✅ **Native API** | ✅ **Native API** | ✅ **Native API** | N/A |
