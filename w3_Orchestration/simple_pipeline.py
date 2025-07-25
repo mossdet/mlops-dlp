@@ -162,7 +162,12 @@ class MLPipeline:
             mlflow.log_artifact(str(preprocessor_path), artifact_path="preprocessor")
 
             # Log model
-            mlflow.xgboost.log_model(booster, artifact_path="models_mlflow")
+            try:
+                mlflow.xgboost.log_model(booster, artifact_path="models_mlflow")
+                logger.info("Model logged successfully")
+            except Exception as e:
+                logger.error(f"Failed to log model: {e}")
+                raise
             
             logger.info(f"Model trained successfully. RMSE: {rmse:.4f}")
             
