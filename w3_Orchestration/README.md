@@ -1,7 +1,8 @@
 [back to main ](../README.md)
 # Week 3: ML Pipeline Orchestration Examples
 
-This directory contains comprehensive examples of ML pipeline orchestration approaches, from simple to enterprise-grade solutions. Each example demonstrates different patterns and tools used in the MLOps industry for managing complex machine learning workflows.
+This directory contains examples of ML pipeline orchestration. 
+Each example demonstrates different tools used in MLOps for managing machine learning workflows.
 
 ## 🔗 Reference Alignment Features
 
@@ -19,20 +20,7 @@ This directory contains comprehensive examples of ML pipeline orchestration appr
 ## 📁 Files Overview
 
 ### 1. `simple_pipeline.py` - Basic Pipeline Class
-A straightforward Python class-based approach to orchestrating ML workflows, **FULLY ALIGNED** with the reference `duration-prediction.py` script.
-
-**Features:**
-- Object-oriented pipeline design with **complete reference script alignment**
-- Step-by-step execution with comprehensive logging
-- Next month validation data (proper train/val split)
-- XGBoost native API with DMatrix (matching reference implementation)
-- MLflow tracking with EC2 server integration
-- Sparse feature vectorization for memory efficiency
-- Command-line argument support for production use
-- Run ID saved to file for downstream processing
-- **Expected RMSE: ~6.60 (identical to reference)**
-
-**Expected Runtime:** ~45-60 seconds
+A straightforward orchestration with python only.
 
 **Usage:**
 ```bash
@@ -44,16 +32,13 @@ python simple_pipeline.py --year=2021 --month=1
 ```
 
 ### 2. `airflow_pipeline.py` - Apache Airflow DAG
-Professional-grade workflow orchestration using Apache Airflow, **FULLY ALIGNED** with the reference script.
+Orchestration example using Apache Airflow
 
 **Features:**
-- DAG-based task definition with **complete reference alignment**
+- DAG-based task definition
 - Task dependencies and XCom communication
 - Retry logic and error handling
 - Scalable and production-ready
-- **Expected RMSE: ~6.60 (identical to reference)**
-
-**Expected Runtime:** ~50-70 seconds (standalone mode)
 
 **Usage:**
 ```bash
@@ -78,20 +63,16 @@ airflow version
 ```
 
 ### 3. `prefect_pipeline.py` - Prefect Workflow
-Modern workflow orchestration with Prefect 2.0, **FULLY ALIGNED** with the reference `duration-prediction.py` script.
-
+Workflow orchestration with Prefect 2.0
 **Features:**
-- Flow and task decorators (no deprecated SequentialTaskRunner)
-- Advanced retry strategies with configurable delays
+- Flow and task decorators
+- Retry strategies with configurable delays
 - Data validation steps with quality checks
 - Next month validation data (train/val split like reference script)
 - XGBoost native API with DMatrix (matching reference implementation)
 - MLflow tracking with EC2 server integration
 - Command-line argument support for production use
 - Sparse feature vectorization and optimized feature engineering
-- **Expected RMSE: ~6.60 (identical to reference)**
-
-**Expected Runtime:** ~55-75 seconds (with validation steps)
 
 **Usage:**
 ```bash
@@ -109,17 +90,13 @@ python prefect_pipeline.py
 ```
 
 ### 4. `make_pipeline.py` - Make-like Task Runner
-Simple dependency-based task runner inspired by GNU Make, **FULLY ALIGNED** with the reference script.
+Simple dependency-based task runner inspired by GNU Make
 
 **Features:**
 - Dependency tracking with smart rebuilds
 - Incremental builds (only run what's needed)
 - File-based caching for efficiency
 - CLI interface with comprehensive options
-- **Complete alignment with reference script**
-- **Expected RMSE: ~6.60 (identical to reference)**
-
-**Expected Runtime:** ~30-45 seconds (with caching), ~60 seconds (full rebuild)
 
 **Usage:**
 ```bash
@@ -140,10 +117,10 @@ python make_pipeline.py deploy --year 2021 --month 1 --tracking-server-host ec2-
 ```
 
 ### 5. `run_examples.sh` - Interactive Runner
-**Enhanced** bash script that provides an interactive menu to run and manage all examples.
+bash script that provides an interactive menu to run and manage all examples.
 
 **Features:**
-- Interactive menu interface with **FULL ALIGNMENT status indicators**
+- Interactive menu interface
 - Dependency checking and installation with version reporting
 - Cache cleanup functionality with selective file removal
 - Progress tracking and error reporting
@@ -170,7 +147,7 @@ chmod +x run_examples.sh
 # 0) Exit
 ```
 
-### 6. `duration-prediction.py` - Original Implementation
+### 6. `duration-prediction.py` - Most simple and initial implementation of the example workflow 
 The original ML pipeline implementation used as a baseline for comparison.
 
 **Features:**
@@ -417,75 +394,3 @@ def ml_pipeline():
 2. **Implement Monitoring**: Add comprehensive logging and alerting
 3. **Test Thoroughly**: Validate all edge cases and failure scenarios
 4. **Document Dependencies**: Maintain clear dependency documentation
-
-## 🔧 Common Commands Reference
-
-```bash
-# Quick test of all approaches
-./run_examples.sh
-
-# Run specific pipeline
-python simple_pipeline.py  # Testing mode (aligned with reference script)
-python airflow_pipeline.py  
-python prefect_pipeline.py  # Testing mode (edit script to set testing=True)
-python make_pipeline.py deploy
-
-# Run Prefect with arguments (production mode)
-python prefect_pipeline.py --year=2021 --month=1 --tracking-server-host=ec2-18-223-115-201.us-east-2.compute.amazonaws.com --aws-profile=mlops_zc
-
-# Troubleshooting
-python make_pipeline.py --clean  # Clean cache
-python make_pipeline.py --list   # Show available tasks
-python --version                 # Check Python version
-pip list | grep -E "(mlflow|pandas|xgboost|scikit-learn|prefect)"  # Check packages
-
-# Advanced usage
-python make_pipeline.py deploy --year 2021 --month 3 --force
-python make_pipeline.py validate  # Run only up to validation step
-
-# MLflow server connectivity test
-ping ec2-18-223-115-201.us-east-2.compute.amazonaws.com
-aws configure list-profiles  # Check AWS profiles
-```
-
----
-
-## 📊 Expected Output
-
-### Successful Pipeline Run
-```
-🎯 Target: deploy
-📅 Data: 2023-01
-🔄 Force rebuild: False
---------------------------------------------------
-
-🚀 Running task: extract
-✅ Task 'extract' completed in 15.23s
-
-🚀 Running task: transform  
-✅ Task 'transform' completed in 3.45s
-
-🚀 Running task: features
-✅ Task 'features' completed in 2.18s
-
-🚀 Running task: train
-✅ Task 'train' completed in 8.91s
-
-🚀 Running task: validate
-✅ Task 'validate' completed in 0.12s
-
-🚀 Running task: deploy
-✅ Task 'deploy' completed in 0.34s
-
-==================================================
-🎉 Pipeline completed successfully!
-📊 Final model RMSE: 6.2847
-🆔 Model run ID: a1b2c3d4e5f6g7h8i9j0
-```
-
-### Typical Performance Metrics
-- **Total Runtime**: 30-60 seconds (depending on data size)
-- **Data Size**: ~2M records (January 2021, aligned with reference)
-- **Model RMSE**: 5-8 (typical range for trip duration prediction)
-- **Memory Usage**: <2GB peak
-- **Disk Usage**: ~500MB for artifacts

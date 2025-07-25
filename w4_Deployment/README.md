@@ -2,7 +2,7 @@
 [back to main ](../README.md)
 # MLOps - Week 4: Model Deployment
 
-This week covers the fundamentals of machine learning model deployment, including different deployment patterns, strategies, and tools used in production environments.
+This section covers the fundamentals of machine learning model deployment, including different deployment patterns, strategies, and tools used in production environments.
 
 ## Web Service Deployment for Ride Duration Prediction
 This section describes the deployment of a web service for ride duration prediction, which includes the retrieval of models from a model registry.

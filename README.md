@@ -40,7 +40,7 @@ sar -u 5
 
 ## [2. Experiment Tracking](/w2_Experiment_Tracking/) <a name="02-experiment-tracking"></a>
 
-Learn how to track and manage machine learning experiments using MLflow and other tools.
+This section covers how to track and manage machine learning experiments using MLflow and other tools.
 
 ![Experiment-Tracking-Visual-Summary](/Visual_Summaries/W2-Experiment-Tracking_v2.png)
 
@@ -52,7 +52,7 @@ Learn how to track and manage machine learning experiments using MLflow and othe
 
 ## [3. Orchestrating ML Pipelines](/w3_Orchestration/) <a name="03-orchestration"></a>
 
-Explore workflow orchestration and pipeline management for machine learning projects.
+This section explores workflow orchestration and pipeline management for machine learning projects.
 
 ### Key Topics:
 - Pipeline design and architecture
@@ -62,7 +62,7 @@ Explore workflow orchestration and pipeline management for machine learning proj
 
 ## [4. Deploying ML Models](/w4_Deployment/) <a name="04-deployment"></a>
 
-Learn various deployment strategies and patterns for machine learning models in production.
+This section covers deployment strategies for machine learning models in production.
 
 ![Experiment-Tracking-Visual-Summary](/Visual_Summaries/Deployment_1.png)
 
