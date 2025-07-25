@@ -14,6 +14,9 @@ build-essential \
 
 RUN pip install -U pip
 
+# Install awscli for AWS profile support
+RUN pip install --upgrade awscli
+
 # 4. Application Setup
 WORKDIR /app
 COPY requirements.txt .
@@ -29,7 +32,12 @@ RUN pip install -r requirements.txt --no-cache-dir
 COPY ["predict_and_fetch_from_mlfow.py", "./"]
 #COPY ["models/", "./models/"]
 
+# Copy AWS credentials and config into the container (if needed)
+# Make sure to have these files in your build context or adjust the path accordingly
+COPY .aws/credentials /root/.aws/credentials
+COPY .aws/config /root/.aws/config
 
 # 6. Runtime Configuration
 EXPOSE 9696
+EXPOSE 5000
 ENTRYPOINT [ "gunicorn", "--bind", "0.0.0.0:9696", "predict_and_fetch_from_mlfow:app" ]

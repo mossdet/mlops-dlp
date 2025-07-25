@@ -19,7 +19,7 @@ Run Docker container:
         kill PID PID 
 
     docker build --no-cache -t ride-duration-prediction-service:v1 .
-    docker run -it --rm -p 9696:9696 ride-duration-prediction-service:v1
+    docker run -it --rm -p 9696:9696 -p 5000:5000 ride-duration-prediction-service:v1
 """
 # Standard library
 import os
@@ -124,8 +124,6 @@ def predict(dv, model, features):
     # Return the predicted duration
     return float(preds[0])
 
-# Load preprocessor and model
-dv, model = load_preprocessor_and_model_from_mlflow(mlflow_config)
 
 # Setup web service
 app = Flask('taxi_duration_prediction')
@@ -134,6 +132,8 @@ def predict_endpoint():
     """
     Flask endpoint for predicting taxi ride duration.
     """
+    # Load preprocessor and model
+    dv, model = load_preprocessor_and_model_from_mlflow(mlflow_config)
 
     ride = request.get_json()
     features = prepare_features(ride)
@@ -145,5 +145,6 @@ def predict_endpoint():
     return jsonify(result)
 
 if __name__ == "__main__":
+    print("Main from predict_and_fetch_from_mlfow.py is running")
     dv, model = load_preprocessor_and_model_from_mlflow(mlflow_config)
     app.run(debug=True, host='0.0.0.0', port=9696)
