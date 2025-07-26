@@ -2,13 +2,11 @@
 
 # Week 3 - Orchestration Examples Runner
 # This script helps you run different orchestration examples
-# All scripts are now FULLY ALIGNED with duration-prediction.py for consistency
 
 set -e  # Exit on any error
 
 echo "🎭 MLOps Week 3 - Orchestration Examples"
 echo "========================================"
-echo "✅ ALL SCRIPTS FULLY ALIGNED with duration-prediction.py reference:"
 echo "   ✓ Uses PU_DO as single categorical feature"
 echo "   ✓ DictVectorizer with sparse=True"
 echo "   ✓ Next month validation data"
@@ -19,9 +17,13 @@ echo "   ✓ Consistent RMSE ~6.60 across all examples"
 echo ""
 
 # Check if we're in the right directory
-if [ ! -f "simple_pipeline.py" ]; then
+# The -f flag in bash is used with the test command [ -f FILE ] to check if a file exists and is a regular file.
+# Example: [ -f "simple_pipeline.py" ] returns true if "simple_pipeline.py" exists and is a regular file.
+if [ ! -e "simple_pipeline.py" ]; then
     echo "❌ Error: Please run this script from the w3_Orchestration directory"
-    exit 1
+    exit 1 # exit 1 indicates an error, exit 0 indicates success
+else
+    echo "✅ Running from correct directory: $(pwd)"
 fi
 
 # Function to check if a command exists
@@ -51,10 +53,10 @@ run_example() {
 show_menu() {
     echo ""
     echo "Choose an orchestration example to run:"
-    echo "1) Simple Pipeline (✅ FULLY ALIGNED - RMSE ~6.60)"
-    echo "2) Airflow Pipeline (✅ FULLY ALIGNED - RMSE ~6.60)"
-    echo "3) Prefect Pipeline (✅ FULLY ALIGNED - RMSE ~6.60)"
-    echo "4) Make-like Pipeline (✅ FULLY ALIGNED - RMSE ~6.60)"
+    echo "1) Simple Pipeline (✅ RMSE ~6.60)"
+    echo "2) Airflow Pipeline (✅ RMSE ~6.60)"
+    echo "3) Prefect Pipeline (✅ RMSE ~6.60)"
+    echo "4) Make-like Pipeline (✅ RMSE ~6.60)"
     echo "5) Run all examples (sequential execution)"
     echo "6) Install optional dependencies (Airflow, Prefect)"
     echo "7) Clean cache and temporary files"
@@ -165,7 +167,7 @@ show_configuration() {
         uv run python config.py --show 2>/dev/null || echo "   ⚠️  Could not load live config (using defaults below)"
     else
         echo "�📅 Default Data:"
-        echo "   Year: 2021, Month: 1 (aligned with reference script)"
+        echo "   Year: 2021, Month: 1"
         echo "   Validation: Uses next month (2021-02) for validation"
         echo ""
         echo "🌐 MLflow Configuration:"
@@ -193,7 +195,6 @@ show_configuration() {
     echo "   - Update AWS profile: uv run python -c \"from config import get_config; c=get_config(); c.update_mlflow_settings(aws_profile='new-profile'); c.save_config()\""
     echo "   - Override per run: uv run python script.py --tracking-server-host custom-server --aws-profile custom-profile"
     echo ""
-    echo "✅ ALL SCRIPTS FULLY ALIGNED with duration-prediction.py via centralized config"
     echo "🎯 Performance: Consistent RMSE ~6.60 across all examples"
 }
 
@@ -281,7 +282,6 @@ print(f'✅ XGBoost training test: RMSE={rmse:.4f}')
 run_all() {
     echo ""
     echo "🎯 Running all orchestration examples..."
-    echo "ALL EXAMPLES FULLY ALIGNED with duration-prediction.py"
     echo "Expected: Consistent RMSE ~6.60 across all implementations"
     echo "This will take several minutes..."
     echo ""
@@ -290,25 +290,25 @@ run_all() {
     local total_count=4
     
     echo "📋 Execution Plan:"
-    echo "   1️⃣  Simple Pipeline (Class-based, FULLY ALIGNED)"
-    echo "   2️⃣  Airflow Pipeline (DAG-based, FULLY ALIGNED)"
-    echo "   3️⃣  Prefect Pipeline (Flow-based, FULLY ALIGNED)"
-    echo "   4️⃣  Make-like Pipeline (Dependency-based, FULLY ALIGNED)"
+    echo "   1️⃣  Simple Pipeline (Class-based)"
+    echo "   2️⃣  Airflow Pipeline (DAG-based)"
+    echo "   3️⃣  Prefect Pipeline (Flow-based)"
+    echo "   4️⃣  Make-like Pipeline (Dependency-based)"
     echo ""
     
-    if run_example "simple_pipeline.py" "Simple Pipeline (FULLY ALIGNED)"; then
+    if run_example "simple_pipeline.py" "Simple Pipeline"; then
         ((success_count++))
     fi
     
-    if run_example "airflow_pipeline.py" "Airflow Pipeline (FULLY ALIGNED)"; then
+    if run_example "airflow_pipeline.py" "Airflow Pipeline"; then
         ((success_count++))
     fi
-    
-    if run_example "prefect_pipeline.py" "Prefect Pipeline (FULLY ALIGNED)"; then
+
+    if run_example "prefect_pipeline.py" "Prefect Pipeline"; then
         ((success_count++))
     fi
-    
-    if run_example "make_pipeline.py" "Make-like Pipeline (FULLY ALIGNED)"; then
+
+    if run_example "make_pipeline.py" "Make-like Pipeline"; then
         ((success_count++))
     fi
     
@@ -320,7 +320,6 @@ run_all() {
     
     if [ $success_count -eq $total_count ]; then
         echo "🎉 ALL EXAMPLES COMPLETED SUCCESSFULLY!"
-        echo "✅ ALL SCRIPTS FULLY ALIGNED with duration-prediction.py!"
         echo "🎯 Performance: Consistent RMSE ~6.60 achieved across all implementations"
         
         # Show run_id if available
@@ -386,16 +385,16 @@ main() {
         
         case $choice in
             1)
-                run_example "simple_pipeline.py" "Simple Pipeline (FULLY ALIGNED)"
+                run_example "simple_pipeline.py" "Simple Pipeline"
                 ;;
             2)
-                run_example "airflow_pipeline.py" "Airflow Pipeline (FULLY ALIGNED)"
+                run_example "airflow_pipeline.py" "Airflow Pipeline"
                 ;;
             3)
-                run_example "prefect_pipeline.py" "Prefect Pipeline (FULLY ALIGNED)"
+                run_example "prefect_pipeline.py" "Prefect Pipeline"
                 ;;
             4)
-                run_example "make_pipeline.py" "Make-like Pipeline (FULLY ALIGNED)"
+                run_example "make_pipeline.py" "Make-like Pipeline"
                 ;;
             5)
                 run_all
@@ -414,7 +413,6 @@ main() {
                 ;;
             0)
                 echo "👋 Goodbye!"
-                echo "✅ All scripts remain FULLY ALIGNED with duration-prediction.py"
                 echo "🎯 Expected performance: RMSE ~6.60 across all implementations"
                 exit 0
                 ;;

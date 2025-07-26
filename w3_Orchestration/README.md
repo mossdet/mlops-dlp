@@ -136,7 +136,7 @@ chmod +x run_examples.sh
 ./run_examples.sh
 
 # Available options:
-# 1-4) Run individual examples (ALL FULLY ALIGNED)
+# 1-4) Run individual examples
 # 5) Run all examples sequentially
 # 6) Install optional dependencies (Airflow, Prefect)
 # 7) Clean cache and temporary files
@@ -188,10 +188,10 @@ The interactive menu will show:
 ### Option 2: Direct Execution
 ```bash
 # All scripts now use consistent defaults (year=2021, month=1)
-uv run python simple_pipeline.py       # ✅ FULLY ALIGNED - RMSE ~6.60
-uv run python airflow_pipeline.py      # ✅ FULLY ALIGNED - RMSE ~6.60  
-uv run python prefect_pipeline.py      # ✅ FULLY ALIGNED - RMSE ~6.60
-uv run python make_pipeline.py         # ✅ FULLY ALIGNED - RMSE ~6.60
+uv run python simple_pipeline.py       # ✅ RMSE ~6.60
+uv run python airflow_pipeline.py      # ✅ RMSE ~6.60  
+uv run python prefect_pipeline.py      # ✅ RMSE ~6.60
+uv run python make_pipeline.py         # ✅ RMSE ~6.60
 
 # All scripts support command-line arguments:
 uv run python simple_pipeline.py --year 2021 --month 1 --tracking-server-host ec2-18-223-115-201.us-east-2.compute.amazonaws.com --aws-profile mlops_zc
