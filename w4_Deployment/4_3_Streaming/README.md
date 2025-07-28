@@ -12,8 +12,8 @@ flowchart LR
 ## - AWS Lambda is a serverless compute service that runs code in response to events and automatically manages the compute resources required by that code.
 ```mermaid
 flowchart LR
-    E[Event Source] -->|Trigger| F[AWS Lambda Function]
-    F -->|Process| G[Output (e.g., Database, Notification, API)]
+    A[Event Source] -->|Trigger| B[AWS Lambda Function]
+    B -->|Process| C[Output (e.g., Database, Notification, API)]
 ```
 
 
