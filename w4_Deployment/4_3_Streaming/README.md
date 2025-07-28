@@ -13,7 +13,7 @@ flowchart LR
 ```mermaid
 flowchart LR
     A[Event Source] -->|Trigger| B[AWS Lambda Function]
-    B -->|Process| C[Output (e.g., Database, Notification, API)]
+    B -->|Process| C[Output "e.g., Database, Notification, API"]
 ```
 
 
